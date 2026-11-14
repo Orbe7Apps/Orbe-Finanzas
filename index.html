@@ -3213,12 +3213,12 @@ html.mono[data-theme="dark"] :is(#hist-list .hrow[data-hid], .pay-list .pay[data
 .go-act:not([hidden]) { animation: goPop .45s cubic-bezier(.34,1.56,.64,1) backwards; }
 .go-act:active { transform: scale(.95); }
 @keyframes goPop { from { transform: scale(.5); opacity: 0; } }
-.go-body { display: grid; grid-template-columns: 118px minmax(0, 1fr); align-items: center; gap: 12px; margin: -6px 0 -4px -16px; }
+.go-body { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 12px; margin: -8px 0 -10px -16px; }
 .go-viz { display: flex; }
 .go-viz svg { display: block; flex: none; overflow: visible; }
 .go-ring { transition: opacity .35s ease; }
 .go-arc { transition: stroke-width .35s ease; }
-.go-sway { transform-origin: -28px 145px; animation: goSway var(--d) ease-in-out infinite alternate; }
+.go-sway { transform-origin: -8px 145px; animation: goSway var(--d) ease-in-out infinite alternate; }
 @keyframes goSway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
 /* Destello que recorre lo ahorrado de cada línea */
 .go-glint { stroke: var(--surface); stroke-dasharray: 14 4000; opacity: 0; animation: goGlint 6.5s ease-in-out infinite; }
@@ -3780,7 +3780,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         <button type="button" class="go-act" id="go-db" hidden></button>
       </div>
       <div class="go-body">
-        <div class="go-viz"><svg id="go-svg" viewBox="0 -14 132 318" preserveAspectRatio="xMinYMid meet" aria-hidden="true"></svg></div>
+        <div class="go-viz"><svg id="go-svg" viewBox="0 -14 152 318" preserveAspectRatio="xMinYMid meet" aria-hidden="true"></svg></div>
         <div class="go-list" id="go-list"></div>
       </div>
     </div>
@@ -8551,14 +8551,14 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     (function () {
       var box = $("gorb"); if (!box) return;
       var svg = $("go-svg"), list = $("go-list"), db = $("go-db"), NS = "http://www.w3.org/2000/svg";
-      var CX = -28, CY = 145, OUT = 140, INN = 54, X0 = -14, VW = 132, VH = 318;
+      var CX = -8, CY = 145, OUT = 140, INN = 50, X0 = -14, VW = 152, VH = 318;
       var RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
       var rings = [], info = [], sel = null, sig = "", lastTxt = "", saved = 0, target = 0, cur = "USD";
       var DEFS = '<defs><filter id="go-gl" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3" result="b"></feGaussianBlur><feComponentTransfer in="b" result="s"><feFuncA type="linear" slope="0.55"></feFuncA></feComponentTransfer><feMerge><feMergeNode in="s"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs>';
       // El centro queda fuera de la pantalla: las líneas entran ya empezadas desde el borde izquierdo
       function radii(n) {
-        if (n <= 1) return { R: [OUT - 20], SW: 16 };
-        var step = Math.min(24, (OUT - INN) / (n - 1)), SW = Math.max(8, Math.min(15, step - 6));
+        if (n <= 1) return { R: [OUT - 12], SW: 20 };
+        var step = Math.min(29, (OUT - INN) / (n - 1)), SW = Math.max(8, Math.min(18, step - 7));
         var R = []; for (var i = 0; i < n; i++) R.push(OUT - i * step); return { R: R, SW: SW };
       }
       function path(r) { var dx = X0 - CX, dy = Math.sqrt(r * r - dx * dx); return "M" + X0 + " " + (CY + dy).toFixed(1) + " A" + r + " " + r + " 0 1 0 " + X0 + " " + (CY - dy).toFixed(1); }
@@ -8608,9 +8608,8 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       }
       // Alto de las líneas según cuántas metas hay: sin espacio vacío arriba ni abajo
       function size() {
-        var n = info.length, H = Math.min(320, n * 47 + (n - 1) * 7 + 6), h = Math.max(200, Math.min(340, H + 80));
-        h = Math.min(h, Math.round((box.clientWidth || innerWidth) * 0.36 * VH / VW));
-        var w = Math.round(h * VW / VH); h = Math.round(w * VH / VW);
+        // Arco grande y siempre del mismo tamaño: ocupa cerca del 42 % del ancho
+        var w = Math.round(Math.max(120, Math.min(170, (box.clientWidth || innerWidth - 32) * 0.42))), h = Math.round(w * VH / VW);
         svg.setAttribute("width", w); svg.setAttribute("height", h);
         svg.parentNode.parentNode.style.gridTemplateColumns = w + "px minmax(0, 1fr)";
       }
