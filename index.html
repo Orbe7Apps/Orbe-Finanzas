@@ -8489,21 +8489,23 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       function draw() {
         size(); ctx.clearRect(0, 0, VW, VH);
         var k, bg = rgb("var(--bg)"), sf = rgb("var(--surface)"), mu = rgb("var(--muted)");
-        var tracksB = [], tracksF = [], litB = [], litF = [], glowB = [], glowF = [];
+        var tracksB = [], tracksF = [], litB = [], litF = [];
         rings.forEach(function (q) {
           var f = frac(q.row), on = sel === q.id, dim = sel != null && !on, P = [], nl = Math.round(f * SEG), c = ringCol(q.row);
           for (k = 0; k <= SEG; k++) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832); P.push(proj(t3[0], t3[1], t3[2])); }
           // Guía: un trazo continuo por cada mitad (delante o detrás), con un punto de solape para que no quede junta
-          var run = null, glow = null, first = null, tcol = mix(c, bg, dim ? 0.06 : 0.16);
+          var run = null, lit = null, tcol = mix(c, bg, dim ? 0.06 : 0.16);
           for (k = 0; k < SEG; k++) {
             var mz = (P[k][2] + P[k + 1][2]) / 2, front = mz < -0.5;
-            if (!run || run.front !== front) { run = { front: front, pts: [P[k > 0 ? k - 1 : 0], P[k]], col: tcol }; if (k === 0) run.pts.shift(); (front ? tracksF : tracksB).push(run); if (!first) first = run; }
+            if (!run || run.front !== front) { run = { front: front, pts: [P[k > 0 ? k - 1 : 0], P[k]], col: tcol }; if (k === 0) run.pts.shift(); (front ? tracksF : tracksB).push(run); }
             run.pts.push(P[k + 1]);
+            // Línea de color: también de un solo trazo por cada mitad (Safari dibuja mal los tramos sueltos muy cortos)
             if (k < nl) {
-              (front ? litF : litB).push({ z: mz, a: P[k], b: P[k + 1], col: dim ? mix(c, bg, 0.26) : css(c), w: on ? SW + 4 : SW });
-              if (on) { if (!glow || glow.front !== front) { glow = { front: front, pts: [P[k]], col: css(c), w: SW + 4 }; (front ? glowF : glowB).push(glow); } glow.pts.push(P[k + 1]); }
+              if (!lit || lit.front !== front) { lit = { front: front, z: 0, n: 0, pts: [P[k > 0 ? k - 1 : 0], P[k]], col: dim ? mix(c, bg, 0.26) : css(c), w: on ? SW + 4 : SW, on: on }; if (k === 0) lit.pts.shift(); (front ? litF : litB).push(lit); }
+              lit.pts.push(P[k + 1]); lit.n++; lit.z += (mz - lit.z) / lit.n;
             }
           }
+          if (lit && nl >= SEG) lit.pts.push(P[1]);   // vuelta completa: solapa el inicio
           if (run) run.pts.push(P[1]);   // cierra la vuelta solapando el primer tramo
         });
         // Trazo suave por los puntos medios: sin vértices ni microlíneas, se vea como se vea el orbe
@@ -8513,21 +8515,25 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           var e = pts[pts.length - 1]; ctx.lineTo(e[0], e[1]); ctx.stroke();
         }
         function tracks(arr) { ctx.globalAlpha = 1; ctx.lineCap = "butt"; ctx.lineJoin = "round"; ctx.lineWidth = SW; arr.forEach(function (r) { ctx.strokeStyle = r.col; curve(r.pts); }); }
-        function lits(glows, arr) {
+        function lits(arr) {
           ctx.globalAlpha = 1; ctx.lineCap = "round"; ctx.lineJoin = "round";
-          glows.forEach(function (g) { ctx.lineWidth = g.w; ctx.strokeStyle = g.col; ctx.shadowColor = g.col; ctx.shadowBlur = 9; curve(g.pts); ctx.shadowBlur = 0; ctx.shadowColor = "transparent"; });   // brillo del elegido, de un solo trazo
           arr.sort(function (x, y) { return y.z - x.z; });
-          arr.forEach(function (it) { ctx.lineWidth = it.w; ctx.strokeStyle = it.col; ctx.beginPath(); ctx.moveTo(it.a[0], it.a[1]); ctx.lineTo(it.b[0], it.b[1]); ctx.stroke(); });
+          arr.forEach(function (it) {
+            ctx.lineWidth = it.w; ctx.strokeStyle = it.col;
+            if (it.on) { ctx.shadowColor = it.col; ctx.shadowBlur = 9; }   // brillo del elegido
+            curve(it.pts);
+            if (it.on) { ctx.shadowBlur = 0; ctx.shadowColor = "rgba(0,0,0,0)"; }
+          });
         }
         function dust(front) { if (tf <= 0.02) return; ctx.fillStyle = css(mu); stars.forEach(function (st) { var sp = proj(st.r * Math.cos(st.a), st.y, st.r * Math.sin(st.a)); if ((sp[2] < 0) !== front) return; ctx.globalAlpha = st.o * tf; ctx.beginPath(); ctx.arc(sp[0], sp[1], st.s, 0, 6.3); ctx.fill(); }); ctx.globalAlpha = 1; }
         // Capas: guías de atrás, núcleo, guías de delante; y encima todas las líneas de color (las de atrás, recortadas fuera del núcleo).
         // Así ninguna guía corta una línea, y las líneas entre sí se ordenan tramo a tramo por profundidad.
         dust(false); tracks(tracksB);
-        ctx.shadowColor = "rgba(20,16,50,.2)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "transparent";
+        ctx.shadowColor = "rgba(20,16,50,.2)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "rgba(0,0,0,0)";
         ctx.strokeStyle = mix(sf, bg, 0.55); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(CX, CY, CORE + 3, 0, 6.3); ctx.stroke();
         tracks(tracksF); dust(true);
-        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.arc(CX, CY, CORE + 6, 0, 6.2832, true); ctx.clip("evenodd"); lits(glowB, litB); ctx.restore();
-        lits(glowF, litF);
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.arc(CX, CY, CORE + 6, 0, 6.2832, true); ctx.clip("evenodd"); lits(litB); ctx.restore();
+        lits(litF);
         // El núcleo es como un vidrio esmerilado: lo que le pasa por delante se ve tenue y el texto siempre se lee
         ctx.globalAlpha = 0.86; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE - 1, 0, 6.3); ctx.fill();
         ctx.globalAlpha = 1;
