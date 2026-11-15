@@ -3166,7 +3166,10 @@ html.mono[data-theme="dark"] :is(:is(#hist-list, #ad-list) .hrow[data-hid], .pay
 /* Orbe de cuentas */
 .acc3 { grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; justify-items: center; }
 .acc3 .acc-sum { display: block !important; position: relative; width: 100% !important; max-width: 353px; height: auto !important; aspect-ratio: 353 / 300; margin: 0 auto !important; touch-action: pan-y; -webkit-user-select: none; user-select: none; cursor: grab; }
-.acc3 .acc-sum svg.ao-svg { position: absolute; inset: 0; width: 100% !important; height: 100% !important; overflow: visible; }
+.acc3 .acc-sum canvas.ao-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.acc3 .acc-sum.grab { cursor: grabbing; }
+/* En 3D el disco del núcleo se dibuja en el lienzo (los anillos pueden pasarle por delante); aquí queda solo el texto */
+.ao-mid.g3 { background: none; box-shadow: none; }
 .ao-ring { transition: opacity .35s ease; }
 .ao-arc { transition: stroke-width .35s ease; }
 /* Núcleo: disco sólido con sombra en el centro del orbe */
@@ -8430,43 +8433,93 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     $("sav-accs").addEventListener("click", function (e) { var b = e.target.closest("[data-acc-open]"); if (b) openAccd(b.getAttribute("data-acc-open")); });
     $("sav-tip-go").addEventListener("click", function () { openAccSheet(null, true); $("acc-nombre").placeholder = "Ej: Ahorro en dólares, Binance ahorro"; });
     $("sav-tip-no").addEventListener("click", function () { state.savTipOff = true; save(); $("sav-tip").hidden = true; showToast("Puedes crearla cuando quieras: al agregar una cuenta, activa «Cuenta de ahorro»."); });
-    // Orbe (Cuentas en Inicio y Metas en Ahorro): anillos que giran solos, se arrastran en círculo con inercia y,
+    // Orbe en 3D (Cuentas en Inicio y Metas en Ahorro): anillos en órbita que giran solos, se giran con el dedo en cualquier dirección y,
     // al tocar un nombre, su anillo brilla y el centro cuenta hasta su monto. Otro toque lo abre.
-    // cfg: box, list (opcional), fid (id del filtro), rings(filas), id(fila), color(fila), sig(fila), core(fila|null, extra, filas), open(id), onSel(id), zeroHide
+    // cfg: box, list (opcional), rings(filas), id(fila), color(fila), sig(fila), frac(fila), core(fila|null, extra, filas), open(id), onSel(id), zeroHide, seed
     function makeOrb(cfg) {
-      var box = cfg.box, list = cfg.list || null, FID = cfg.fid; if (!box) return null;
-      var NS = "http://www.w3.org/2000/svg", W = 353, H = 300, CX = 176.5, CY = 150, SW = 16;
-      // Núcleo: disco sólido en el centro (radio 60) con un aro de progreso (radio 66); los anillos nunca bajan de DISC + GAP
-      var DISC = 60, PR = 66, GAP = 13, OUT = 138;
+      var box = cfg.box, list = cfg.list || null; if (!box) return null;
+      // Orbe en 3D sobre un lienzo, con proyección propia: cada anillo es una órbita inclinada alrededor del núcleo.
+      var VW = 353, VH = 300, CX = 176.5, CY = 150, F = 620, SEG = 120, OUT = 136, CORE = 60, SW = 13;
+      var TX = [0.10, -0.16, 0.20, -0.08, 0.14], TZ = [-0.06, 0.13, -0.10, 0.18, -0.15];
       var RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-      var rings = [], rot = [], vel = [], mom = 0, sel = null, spin = 0, data = [], extra = {}, raf = 0, last = 0, seen = false, sig = "";
-      box.innerHTML = '<svg class="ao-svg" viewBox="0 0 ' + W + " " + H + '" aria-hidden="true"><defs><filter id="' + FID + '" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"></feGaussianBlur><feComponentTransfer in="b" result="s"><feFuncA type="linear" slope="0.55"></feFuncA></feComponentTransfer><feMerge><feMergeNode in="s"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g class="ao-r"></g></svg>' +
-        '<div class="ao-mid" aria-live="polite"></div>';
-      var svg = box.querySelector("svg"), G = box.querySelector(".ao-r"), mid = box.querySelector(".ao-mid");
-      // Radios de fuera hacia dentro; con muchas cuentas los anillos se afinan en vez de acercarse al núcleo
-      function radii(n) {
-        if (n <= 1) { SW = 16; return [OUT]; }
-        var step = Math.min(26, (OUT - (PR + GAP + 8)) / (n - 1)); SW = Math.max(8, Math.min(16, step - 5));
-        step = Math.min(26, (OUT - (PR + GAP + SW / 2)) / (n - 1));
-        var out = []; for (var i = 0; i < n; i++) out.push(OUT - i * step); return out;
+      var rings = [], sel = null, spin = 0, data = [], extra = {}, raf = 0, last = 0, seen = false, sig = "";
+      box.innerHTML = '<canvas class="ao-cv" aria-hidden="true"></canvas><div class="ao-mid g3" aria-live="polite"></div><i class="ao-probe" hidden></i>';
+      var cv = box.querySelector("canvas"), ctx = cv.getContext("2d"), mid = box.querySelector(".ao-mid"), probe = box.querySelector(".ao-probe");
+      // Colores resueltos a rgb (sirve para variables CSS y para el modo blanco y negro); se recalculan si cambia el tema
+      var ccache = {};
+      function rgb(c) {
+        if (ccache[c]) return ccache[c];
+        var v = String(c).trim(), m, d = 0;
+        // variables CSS: se leen del documento (no de un elemento, porque en blanco y negro los colores en línea se fuerzan a tinta)
+        while ((m = v.match(/^var\((--[\w-]+)/)) && d++ < 4) v = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
+        if ((m = v.match(/^#([0-9a-f]{3,8})$/i))) { var h = m[1]; if (h.length < 6) h = h.replace(/./g, "$&$&"); return (ccache[c] = [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]); }
+        if (!/^rgb/.test(v)) { probe.style.color = ""; probe.style.color = v; v = getComputedStyle(probe).color || ""; }
+        m = v.match(/[\d.]+/g) || [0, 0, 0]; return (ccache[c] = [+m[0], +m[1], +m[2]]);
       }
+      function css(v) { return "rgb(" + Math.round(v[0]) + "," + Math.round(v[1]) + "," + Math.round(v[2]) + ")"; }
+      // Mezcla opaca: un anillo apagado nunca deja ver lo que tiene detrás
+      function mix(x, y, t) { return css([x[0] * t + y[0] * (1 - t), x[1] * t + y[1] * (1 - t), x[2] * t + y[2] * (1 - t)]); }
+      function ringCol(r) { return rgb(document.documentElement.classList.contains("mono") ? "var(--ink)" : cfg.color(r)); }
+      // Giro: matriz 3x3. Vista inicial con el disco inclinado
+      function rx(q) { var c = Math.cos(q), n = Math.sin(q); return [1, 0, 0, 0, c, -n, 0, n, c]; }
+      function ry(q) { var c = Math.cos(q), n = Math.sin(q); return [c, 0, n, 0, 1, 0, -n, 0, c]; }
+      function mul(x, y) { var m = []; for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) m[i * 3 + j] = x[i * 3] * y[j] + x[i * 3 + 1] * y[3 + j] + x[i * 3 + 2] * y[6 + j]; return m; }
+      var HOME = mul(rx(-1.02), ry(0.35)), R = HOME.slice(), vx = 0, vy = 0;
+      function proj(x, y, z) { var X = R[0] * x + R[1] * y + R[2] * z, Y = R[3] * x + R[4] * y + R[5] * z, Z = R[6] * x + R[7] * y + R[8] * z, k = F / (F + Z); return [CX + X * k, CY + Y * k, Z]; }
+      function ringPt(q, th) { var x = q.r * Math.cos(th), z = q.r * Math.sin(th), c = Math.cos(q.tx), n = Math.sin(q.tx), y1 = -z * n, z1 = z * c; c = Math.cos(q.tz); n = Math.sin(q.tz); return [x * c - y1 * n, x * n + y1 * c, z1]; }
+      // Unas pocas partículas, muy tenues, girando alrededor
+      var stars = []; (function () { var seed = cfg.seed || 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+        for (var i = 0; i < 40; i++) { var r = 70 + Math.pow(rnd(), 0.8) * 75; stars.push({ r: r, a: rnd() * 6.283, y: (rnd() - 0.5) * (10 + r * 0.06), s: 0.5 + rnd() * 0.6, o: 0.10 + rnd() * 0.14, w: 0.5 / Math.sqrt(r) }); } })();
+      function size() { var r = box.getBoundingClientRect(); if (!r.width) return; var d = Math.min(3, window.devicePixelRatio || 1), w = Math.round(r.width * d), h = Math.round(r.height * d); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } ctx.setTransform(cv.width / VW, 0, 0, cv.height / VH, 0, 0); }
+      // Radios de fuera hacia dentro; con muchos anillos se afinan en vez de acercarse al núcleo
       function build() {
-        var withRing = cfg.rings(data), R = radii(withRing.length);
-        G.innerHTML = ""; rings = [];
-        withRing.forEach(function (r, i) {
-          var g = document.createElementNS(NS, "g"), c = cfg.color(r), L = 2 * Math.PI * R[i], len = Math.max(L * 0.045, L * r.p - SW * 0.6);
-          g.setAttribute("class", "ao-ring"); g.setAttribute("data-id", cfg.id(r));
-          g.innerHTML = '<circle cx="' + CX + '" cy="' + CY + '" r="' + R[i] + '" fill="none" stroke="' + c + '" stroke-opacity=".14" stroke-width="' + SW + '"></circle>' +
-            '<g class="ao-arm"><circle class="ao-arc" cx="' + CX + '" cy="' + CY + '" r="' + R[i] + '" fill="none" stroke="' + c + '" stroke-width="' + SW + '" stroke-linecap="round" stroke-dasharray="' + len.toFixed(1) + " " + L.toFixed(1) + '"></circle></g>';
-          G.appendChild(g);
-          rings.push({ id: String(cfg.id(r)), r: R[i], g: g, arm: g.querySelector(".ao-arm"), arc: g.querySelector(".ao-arc") });
-          if (cfg.zeroHide && !(r.p > 0.001)) g.querySelector(".ao-arc").style.visibility = "hidden";   // sin avance: solo la guía
-          if (rot[i] == null) { rot[i] = -90 + i * 47; vel[i] = (i % 2 ? -1 : 1) * (5 + i * 3); }
-        });
-        rot.length = rings.length; vel.length = rings.length;
-        paint(); applySel(false);
+        var wr = cfg.rings(data), n = wr.length, step = n > 1 ? Math.min(24, (OUT - (CORE + 22)) / (n - 1)) : 0, old = rings;
+        SW = n > 1 ? Math.max(7, Math.min(13, step - 9)) : 13;
+        rings = wr.map(function (r, i) { var q = old[i]; return { id: String(cfg.id(r)), row: r, r: OUT - i * step, tx: TX[i % 5], tz: TZ[i % 5], a0: q ? q.a0 : i * 1.3, w: (i % 2 ? -1 : 1) * (0.10 + i * 0.05) }; });
+        box.setAttribute("data-rings", rings.map(function (q) { return q.id; }).join(","));
+        applySel(false);
       }
-      function paint() { rings.forEach(function (o, i) { o.arm.setAttribute("transform", "rotate(" + rot[i].toFixed(2) + " " + CX + " " + CY + ")"); }); }
+      function frac(r) { var v = cfg.frac ? cfg.frac(r) : r.p; return cfg.zeroHide && !(v > 0.001) ? 0 : Math.max(0, Math.min(1, v)); }
+      function draw() {
+        size(); ctx.clearRect(0, 0, VW, VH);
+        var its = [], i, k, bg = rgb("var(--bg)"), sf = rgb("var(--surface)"), mu = rgb("var(--muted)");
+        for (i = 0; i < stars.length; i++) { var st = stars[i], sp = proj(st.r * Math.cos(st.a), st.y, st.r * Math.sin(st.a)); its.push({ z: sp[2], t: 0, p: sp, s: st }); }
+        rings.forEach(function (q) {
+          var f = frac(q.row), on = sel === q.id, dim = sel != null && !on, P = [], nl = Math.round(f * SEG), firstLit = null, lastLit = null;
+          for (k = 0; k <= SEG; k++) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832); P.push(proj(t3[0], t3[1], t3[2])); }
+          // Guía (toda la vuelta) y avance, en tramos cortos ordenados por profundidad; todo opaco para que las uniones no se noten
+          [[SEG, false], [nl, true]].forEach(function (rg) {
+            var run = null;
+            for (k = 0; k < rg[0]; k++) {
+              var mz = (P[k][2] + P[k + 1][2]) / 2, front = mz < 0;
+              if (!run || run.front !== front || run.n >= 8) { run = { z: 0, n: 0, zs: 0, t: 1, pts: [P[k]], q: q, lit: rg[1], on: on, dim: dim, front: front }; its.push(run); if (rg[1]) { lastLit = run; if (!firstLit) firstLit = run; } }
+              run.pts.push(P[k + 1]); run.n++; run.zs += mz; run.z = run.zs / run.n + (rg[1] ? -0.6 : 0);
+            }
+          });
+          // Bolita de la punta: siempre opaca y por encima del final de su línea
+          if (lastLit && f < 0.999) its.push({ z: lastLit.z - 1.2, t: 2, p: P[nl], q: q, on: on, dim: dim });
+        });
+        its.push({ z: 0, t: 3 });
+        its.sort(function (x, y) { return y.z - x.z; });
+        ctx.lineJoin = "round"; ctx.lineCap = "round";
+        its.forEach(function (it) {
+          ctx.globalAlpha = 1;
+          if (it.t === 0) { ctx.globalAlpha = it.s.o; ctx.fillStyle = css(mu); ctx.beginPath(); ctx.arc(it.p[0], it.p[1], it.s.s, 0, 6.3); ctx.fill(); return; }
+          if (it.t === 3) { // núcleo: disco con sombra y un halo
+            ctx.shadowColor = "rgba(20,16,50,.2)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "transparent";
+            ctx.strokeStyle = mix(sf, bg, 0.55); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(CX, CY, CORE + 3, 0, 6.3); ctx.stroke(); return; }
+          var c = ringCol(it.q.row), w = it.on ? SW + 4 : SW, lit = it.dim ? mix(c, bg, 0.26) : css(c);
+          if (it.t === 1) {
+            ctx.lineWidth = it.lit ? w : SW; ctx.strokeStyle = it.lit ? lit : mix(c, bg, it.dim ? 0.06 : 0.16);
+            if (it.lit && it.on) { ctx.shadowColor = css(c); ctx.shadowBlur = 9; }
+            ctx.beginPath(); it.pts.forEach(function (pt, j) { if (j) ctx.lineTo(pt[0], pt[1]); else ctx.moveTo(pt[0], pt[1]); }); ctx.stroke(); ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
+          } else { ctx.fillStyle = it.dim ? mix(sf, bg, 0.6) : css(sf); ctx.beginPath(); ctx.arc(it.p[0], it.p[1], w / 2 + 2.5, 0, 6.3); ctx.fill(); ctx.strokeStyle = lit; ctx.lineWidth = 3; ctx.stroke(); }
+        });
+        // El núcleo es como un vidrio esmerilado: los anillos que le pasan por delante se ven tenues y el texto siempre se lee
+        ctx.globalAlpha = 0.86; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE - 1, 0, 6.3); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      function kick() { if (!raf) draw(); }
       // Monto partido: moneda y céntimos más pequeños
       function parts(txt) { var m = String(txt).match(/^([^\d−-]*?)\s?([−-]?[\d.]+)(,\d+)?(.*)$/); return m ? { cur: m[1].trim(), n: m[2], d: (m[3] || "") + (m[4] || "") } : { cur: "", n: String(txt), d: "" }; }
       // Contador que rueda: cada dígito que cambia gira hacia arriba (si sube) o hacia abajo (si baja), de derecha a izquierda
@@ -8492,7 +8545,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       function applySel(count) {
         var r = sel == null ? null : data.filter(function (x) { return String(cfg.id(x)) === sel; })[0];
         if (sel != null && !r) sel = null;
-        rings.forEach(function (o) { var on = sel === o.id; o.g.style.opacity = sel == null || on ? 1 : 0.22; o.arc.setAttribute("stroke-width", on ? SW + 5 : SW); if (on) o.arm.setAttribute("filter", "url(#" + FID + ")"); else o.arm.removeAttribute("filter"); });
+        box.setAttribute("data-sel", sel == null ? "" : sel);
         if (list) {
           Array.prototype.forEach.call(list.querySelectorAll("[data-acc-pick]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-acc-pick") === sel)); });
           list.classList.toggle("dim", sel != null);
@@ -8509,16 +8562,17 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           if (count && !RM && x[0].animate) x[0].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: "ease" });
         });
         rollTo(v, vv, !!count);
+        kick();
         // Montos largos (millones en bolívares): se ajusta el tamaño para que quepa entero dentro del núcleo
         v.style.fontSize = ""; [k, sx].forEach(function (x) { x.style.fontSize = ""; });
-        var aw = mid.clientWidth - 16;
+        var aw = mid.clientWidth - 22;
         if (aw > 40) [v, k, sx].forEach(function (x) { var sw = x.scrollWidth; if (sw > aw) x.style.fontSize = Math.max(8, parseFloat(getComputedStyle(x).fontSize) * aw / sw).toFixed(1) + "px"; });
       }
       function pick(id, fromChip) {
         id = id == null ? null : String(id);
         if (id != null && id === sel) { if (fromChip && cfg.open) cfg.open(id); return; }   // segundo toque en el nombre de abajo: lo abre
         sel = id; applySel(true);
-        if (sel != null && !RM) spin = 260;
+        if (sel != null && !RM) spin = 1;
       }
       function update(rows, ex) {
         data = rows; extra = ex || {};
@@ -8526,47 +8580,56 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         if (nsig !== sig) { sig = nsig; build(); } else applySel(false);
         start();
       }
-      // Girar arrastrando en círculo (con inercia; los anillos de dentro van más rápido)
+      // Girar con el dedo en cualquier dirección, con inercia. El gesto empieza de lado (hacia arriba o abajo se desplaza la página).
       var drag = null;
-      function pt(e) { var r = svg.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
-      function ang(p) { return Math.atan2(p.y - CY, p.x - CX) * 180 / Math.PI; }
-      box.addEventListener("pointerdown", function (e) { if (e.target.closest(".ao-mid") && sel != null) return; var p = pt(e); drag = { a: ang(p), p: p, moved: 0, id: e.pointerId }; mom = 0; });
+      function pt(e) { var r = box.getBoundingClientRect(); return { x: (e.clientX - r.left) * VW / r.width, y: (e.clientY - r.top) * VH / r.height }; }
+      box.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId }; vx = vy = 0; });
       box.addEventListener("pointermove", function (e) {
-        if (!drag || e.pointerId !== drag.id) return; var p = pt(e), a = ang(p), d = a - drag.a; if (d > 180) d -= 360; if (d < -180) d += 360;
-        drag.a = a; drag.moved += Math.abs(d) * 0.15 + Math.hypot(p.x - drag.p.x, p.y - drag.p.y) * 0.04; drag.p = p;
-        if (drag.moved > 3) { try { box.setPointerCapture(e.pointerId); } catch (x) {} rot.forEach(function (_, i) { rot[i] += d * (1 + i * 0.35); }); mom = d; paint(); }
+        if (!drag || e.pointerId !== drag.id) return;
+        var dx = (e.clientX - drag.x) * 0.0095, dy = (e.clientY - drag.y) * 0.0095; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
+        if (drag.moved > 0.05) { try { box.setPointerCapture(e.pointerId); } catch (x) {} box.classList.add("grab"); R = mul(mul(rx(-dy), ry(dx)), R); vx = dx; vy = -dy; if (raf) return; draw(); start(); }
       });
       function up(e) {
-        if (!drag) return; var p = pt(e), moved = drag.moved; drag = null;
-        if (moved > 3) return;
-        var r = Math.hypot(p.x - CX, p.y - CY), hit = null;
-        rings.forEach(function (o) { if (Math.abs(r - o.r) < Math.max(12, SW * 0.95)) hit = o.id; });
+        if (!drag) return; var moved = drag.moved; drag = null; box.classList.remove("grab");
+        if (moved > 0.05) { start(); return; }
+        vx = vy = 0;
+        var m = pt(e), hit = null, bd = Math.max(13, SW);
+        if (Math.hypot(m.x - CX, m.y - CY) >= CORE) rings.forEach(function (q) { for (var k = 0; k < SEG; k += 2) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832), pp = proj(t3[0], t3[1], t3[2]), d = Math.hypot(pp[0] - m.x, pp[1] - m.y); if (d < bd) { bd = d; hit = q.id; } } });
         if (hit != null) pick(hit);
-        else if (!e.target.closest(".ao-mid") && sel != null) { sel = null; applySel(true); }
+        else if (sel != null) { sel = null; applySel(true); }
       }
-      box.addEventListener("pointerup", up); box.addEventListener("pointercancel", function () { drag = null; });
+      box.addEventListener("pointerup", up); box.addEventListener("pointercancel", function () { drag = null; box.classList.remove("grab"); });
       if (list) list.addEventListener("click", function (e) { var b = e.target.closest("[data-acc-pick]"); if (b) pick(b.getAttribute("data-acc-pick"), true); });
       // Animación solo cuando el orbe se ve y la app está al frente
       function tick(now) {
         raf = 0; var dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
         if (!drag) {
-          rot.forEach(function (_, i) { rot[i] += vel[i] * dt + mom * (1 + i * 0.35) * 0.9; });
-          mom *= 0.92; if (Math.abs(mom) < 0.01) mom = 0;
-          if (spin > 0.5 && sel != null) { var st = spin * 0.12; spin -= st; var k = rings.findIndex(function (o) { return o.id === sel; }); if (k >= 0) rot[k] += st; } else spin = 0;
+          if (Math.abs(vx) + Math.abs(vy) > 0.0004) { R = mul(mul(rx(vy), ry(vx)), R); vx *= 0.95; vy *= 0.95; }
+          else if (!RM) R = mul(R, ry(dt * 0.12));
         }
-        paint();
-        if (seen && !document.hidden && !activeView()) raf = requestAnimationFrame(tick);
+        if (!RM) {
+          stars.forEach(function (st) { st.a += st.w * dt; });
+          rings.forEach(function (q) { q.a0 += q.w * dt * (sel === q.id ? 1 + spin * 6 : 1); });
+        }
+        spin *= 0.94;
+        draw();
+        var moving = !RM || drag || Math.abs(vx) + Math.abs(vy) > 0.0004;
+        if (moving && seen && !document.hidden && !activeView()) raf = requestAnimationFrame(tick);
       }
-      function start() { if (RM || raf || !seen || document.hidden) return; last = 0; raf = requestAnimationFrame(tick); }
+      function start() { if (raf || !seen || document.hidden) return; last = 0; raf = requestAnimationFrame(tick); }
       if (window.IntersectionObserver) new IntersectionObserver(function (en) { seen = en[0].isIntersecting; if (seen) start(); }, { threshold: 0.05 }).observe(box);
       else { seen = true; start(); }
       document.addEventListener("visibilitychange", start);
       new MutationObserver(function () { if (!activeView()) start(); }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
-      return { update: update, pick: pick, sel: function () { return sel; } };
+      // Si cambia el tema o el modo blanco y negro, se vuelven a leer los colores
+      new MutationObserver(function () { ccache = {}; kick(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+      if (window.matchMedia) { try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { ccache = {}; kick(); }); } catch (x) {} }
+      if (window.ResizeObserver) new ResizeObserver(function () { kick(); }).observe(box);
+      return { update: update, pick: pick, sel: function () { return sel; }, home: function () { R = HOME.slice(); vx = vy = 0; kick(); } };
     }
     // Cuentas (Inicio): un anillo por cuenta con saldo, de mayor a menor
     (function () {
-      var o = makeOrb({ box: $("acc-sum"), list: $("acc-list"), fid: "ao-gl",
+      var o = makeOrb({ box: $("acc-sum"), list: $("acc-list"), seed: 23, frac: function (r) { return Math.max(0.045, r.p); },
         rings: function (d) { return d.filter(function (r) { return r.u > 0; }).sort(function (x, y) { return y.u - x.u; }).slice(0, 5); },
         id: function (r) { return r.a.id; }, color: function (r) { return accColor(r.a); },
         sig: function (r) { return r.a.id + ":" + r.p.toFixed(4) + ":" + accColor(r.a); },
@@ -8589,7 +8652,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       var info = [], sel = null;
       function short(v, c) { return money(v, c, Math.abs(v - Math.round(v)) < 0.005 ? 0 : 2); }
       function hid(t) { return state.hideSav ? "••••" : t; }
-      var orb = makeOrb({ box: $("go-sum"), fid: "go-gl", zeroHide: true,
+      var orb = makeOrb({ box: $("go-sum"), seed: 7, zeroHide: true,
         rings: function (d) { return d.slice(0, 5); },
         id: function (x) { return x.g.id; }, color: function (x) { return x.color; },
         sig: function (x) { return x.g.id + ":" + x.p.toFixed(4) + ":" + x.color; },
