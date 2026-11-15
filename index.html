@@ -8493,15 +8493,18 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         rings.forEach(function (q) {
           var f = frac(q.row), on = sel === q.id, dim = sel != null && !on, P = [], nl = Math.round(f * SEG);
           for (k = 0; k <= SEG; k++) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832); P.push(proj(t3[0], t3[1], t3[2])); }
-          // Guía (toda la vuelta) y avance, en tramos cortos ordenados por profundidad; todo opaco para que las uniones no se noten
-          [[SEG, false], [nl, true]].forEach(function (rg) {
-            var run = null;
-            for (k = 0; k < rg[0]; k++) {
-              var mz = (P[k][2] + P[k + 1][2]) / 2, front = mz < 0;
-              if (!run || run.front !== front || run.n >= 8) { run = { z: 0, n: 0, zs: 0, t: 1, pts: [P[k]], q: q, lit: rg[1], on: on, dim: dim, front: front }; its.push(run); }
-              run.pts.push(P[k + 1]); run.n++; run.zs += mz; run.z = run.zs / run.n + (rg[1] ? -0.6 : 0);
+          // Capas, de atrás hacia delante: guías de atrás, avances de atrás, núcleo, guías de delante, avances de delante.
+          // Así una guía nunca corta un avance. La guía es tenue y va en trazos continuos; el avance es opaco y se ordena tramo a tramo.
+          var run = null, glow = null;
+          for (k = 0; k < SEG; k++) {
+            var mz = (P[k][2] + P[k + 1][2]) / 2, front = mz < -0.5;
+            if (!run || run.front !== front) { run = { z: front ? -3000 : 9000, t: 1, pts: [P[k]], q: q, dim: dim }; its.push(run); }
+            run.pts.push(P[k + 1]);
+            if (k < nl) {
+              its.push({ z: (front ? -6000 : 6000) + mz, t: 2, a: P[k], b: P[k + 1], q: q, on: on, dim: dim });
+              if (on) { if (!glow || glow.front !== front) { glow = { z: front ? -5500 : 6500, t: 4, pts: [P[k]], q: q, front: front }; its.push(glow); } glow.pts.push(P[k + 1]); }
             }
-          });
+          }
         });
         its.push({ z: 0, t: 3 });
         its.sort(function (x, y) { return y.z - x.z; });
@@ -8512,12 +8515,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           if (it.t === 3) { // núcleo: disco con sombra y un halo
             ctx.shadowColor = "rgba(20,16,50,.2)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "transparent";
             ctx.strokeStyle = mix(sf, bg, 0.55); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(CX, CY, CORE + 3, 0, 6.3); ctx.stroke(); return; }
-          var c = ringCol(it.q.row), w = it.on ? SW + 4 : SW, lit = it.dim ? mix(c, bg, 0.26) : css(c);
-          if (it.t === 1) {
-            ctx.lineWidth = it.lit ? w : SW; ctx.strokeStyle = it.lit ? lit : mix(c, bg, it.dim ? 0.06 : 0.16);
-            if (it.lit && it.on) { ctx.shadowColor = css(c); ctx.shadowBlur = 9; }
-            ctx.beginPath(); it.pts.forEach(function (pt, j) { if (j) ctx.lineTo(pt[0], pt[1]); else ctx.moveTo(pt[0], pt[1]); }); ctx.stroke(); ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
-          }
+          var c = ringCol(it.q.row), w = it.on ? SW + 4 : SW;
+          var line = function (pts) { ctx.beginPath(); pts.forEach(function (pt, j) { if (j) ctx.lineTo(pt[0], pt[1]); else ctx.moveTo(pt[0], pt[1]); }); ctx.stroke(); };
+          if (it.t === 1) { ctx.globalAlpha = it.dim ? 0.05 : 0.14; ctx.lineCap = "butt"; ctx.lineWidth = SW; ctx.strokeStyle = css(c); line(it.pts); ctx.lineCap = "round"; }
+          else if (it.t === 2) { ctx.lineWidth = w; ctx.strokeStyle = it.dim ? mix(c, bg, 0.26) : css(c); ctx.beginPath(); ctx.moveTo(it.a[0], it.a[1]); ctx.lineTo(it.b[0], it.b[1]); ctx.stroke(); }
+          else { ctx.lineWidth = w; ctx.strokeStyle = css(c); ctx.shadowColor = css(c); ctx.shadowBlur = 9; line(it.pts); ctx.shadowBlur = 0; ctx.shadowColor = "transparent"; }   // brillo del elegido, de un solo trazo
         });
         // El núcleo es como un vidrio esmerilado: los anillos que le pasan por delante se ven tenues y el texto siempre se lee
         ctx.globalAlpha = 0.86; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE - 1, 0, 6.3); ctx.fill();
@@ -8611,8 +8613,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         if (Math.hypot(m.x - CX, m.y - CY) >= CORE) rings.forEach(function (q) { for (var k = 0; k < SEG; k += 2) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832), pp = proj(t3[0], t3[1], t3[2]), d = Math.hypot(pp[0] - m.x, pp[1] - m.y); if (d < bd) { bd = d; hit = q.id; } } });
         if (hit != null) pick(hit);
         else if (sel != null) { sel = null; applySel(true); }
-        else if (is3d && Math.hypot(m.x - CX, m.y - CY) < CORE) goHome();   // tocar el centro sin nada elegido: vuelve a la vista plana
+        // Doble toque en un espacio vacío (sin anillo debajo): vuelve a la vista plana
+        if (hit == null) { var now = Date.now(); if (is3d && now - tapT < 380 && Math.hypot(m.x - tapX, m.y - tapY) < 40) { tapT = 0; goHome(); } else { tapT = now; tapX = m.x; tapY = m.y; } }
+        else tapT = 0;
       }
+      var tapT = 0, tapX = 0, tapY = 0;
       function goHome() { homing = true; is3d = false; vx = vy = 0; freeUntil = 0; box.setAttribute("data-3d", "0"); if (RM) { R = HOME.slice(); homing = false; tf = 0; draw(); } else start(); }
       box.addEventListener("pointerup", up); box.addEventListener("pointercancel", function () { drag = null; box.classList.remove("grab"); });
       if (list) list.addEventListener("click", function (e) { var b = e.target.closest("[data-acc-pick]"); if (b) pick(b.getAttribute("data-acc-pick"), true); });
