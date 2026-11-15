@@ -2521,7 +2521,7 @@ input, textarea, [contenteditable="true"], .hd-rows, .siri-url code { -webkit-us
 .sg-sec { margin-top: 26px; }
 .sg-n { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; margin-left: 8px; border-radius: 11px; background: var(--accent); color: var(--accent-ink, #fff); font-size: 0.78rem; font-weight: 700; vertical-align: 3px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .sg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.sg-card { --gc: var(--accent); width: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 0; border-radius: 22px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: transform 0.15s ease; animation: fadeUp 0.4s var(--spring, ease) both; }
+.sg-card { --gc: var(--accent); --c: var(--gc); width: 100%; display: grid; gap: 6px; padding: 12px 14px 12px; border: 0; border-radius: 22px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; min-width: 0; transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
 .sg-card:active { transform: scale(0.98); }
 .sg-card.done { opacity: 0.72; }
 .sg-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -2534,7 +2534,7 @@ input, textarea, [contenteditable="true"], .hd-rows, .siri-url code { -webkit-us
 .sg-bar { position: relative; height: 6px; border-radius: 3px; background: var(--fill, color-mix(in srgb, var(--ink) 7%, transparent)); overflow: hidden; }
 .sg-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--gc); transition: width 0.6s var(--spring, ease); }
 .sg-bar i.p { opacity: 0.3; }
-.sg-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sg-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
 .sg-stack { display: flex; }
 .sg-stack .sg-av + .sg-av { margin-left: -7px; }
 .sg-av { --c: var(--accent); flex: none; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--c) 18%, var(--surface)); color: var(--c); font-weight: 700; font-size: 0.8rem; }
@@ -2543,6 +2543,7 @@ input, textarea, [contenteditable="true"], .hd-rows, .siri-url code { -webkit-us
 .sg-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 0.76rem; color: var(--muted); white-space: nowrap; }
 .sg-tag svg { width: 14px; height: 14px; }
 .sg-tag.lead { color: #e08a00; font-weight: 600; }
+html.mono .sg-tag.lead, html.mono .sg-tt em { color: var(--ink); }
 .sg-tag.ok { color: var(--in); font-weight: 600; }
 .sg-acts { display: flex; flex-direction: column; margin-top: 6px; }
 .sg-act { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 2px; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
@@ -3220,8 +3221,8 @@ html.mono[data-theme="dark"] :is(#hist-list .hrow[data-hid], .pay-list .pay[data
 .go-p b { color: var(--c); font-weight: 700; }
 .go-a { font-family: var(--display); font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
 /* Gráfico: la línea es lo ahorrado, el punto es hoy y la punteada sigue tu ritmo hasta la meta */
-.go-plot { position: relative; display: block; height: 46px; margin-top: 2px; clip-path: inset(-10px -10px -10px -10px); transition: clip-path 1.2s cubic-bezier(.32,.72,0,1); transition-delay: var(--dl); }
-.go-list.pre .go-plot { clip-path: inset(-10px 100% -10px -10px); transition: none; }
+.go-plot { position: relative; display: block; height: 46px; margin-top: 2px; clip-path: inset(-10px -10px -10px -10px); transition: clip-path 1.2s cubic-bezier(.32,.72,0,1); transition-delay: var(--dl, 0ms); }
+.pre .go-plot { clip-path: inset(-10px 100% -10px -10px); transition: none; }
 .go-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .go-plot path { fill: none; stroke: var(--c); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .go-plot .go-pj { stroke-width: 2; stroke-dasharray: 2 5; opacity: .7; }
@@ -8557,16 +8558,18 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         var ep = pace.eta.split("-"); return MESES_C[Number(ep[1]) - 1] + (ep[0] !== today().slice(0, 4) ? " " + ep[0] : "");
       }
       // Gráfico de una meta. x: tiempo (inicio → hoy → fecha estimada); y: parte de la meta que llevas.
-      function plot(o) {
-        var g = o.g, evs = goalEvents(g), t = today(), pace = o.done ? { kind: "done" } : goalPace(g, evs, o.bal);
-        var Y = function (v) { return BASE - Math.max(0, Math.min(1, g.meta > 0 ? v / g.meta : 0)) * (BASE - TOP); };
-        if (!evs.length) return { h: "" };
+      function plot(o) { var evs = goalEvents(o.g); return { h: plotCore(evs, o.bal, o.g.meta, o.done ? { kind: "done" } : goalPace(o.g, evs, o.bal)) }; }
+      // evs: [{ fecha, delta }] en orden; bal: lo que hay hoy; meta: el monto a lograr; pace: resultado de goalPace (o { kind: "done" })
+      function plotCore(evs, bal, meta, pace) {
+        var t = today(), done = pace.kind === "done";
+        var Y = function (v) { return BASE - Math.max(0, Math.min(1, meta > 0 ? v / meta : 0)) * (BASE - TOP); };
+        if (!evs.length) return "";
         var days = Math.max(1, daysBetween(evs[0].fecha, t)), lead = Math.max(2, days * 0.08), span = days + lead;
         // Dónde cae «hoy»: con ritmo, en proporción al tiempo que falta; si no, deja sitio a la derecha
-        var xn = o.done ? W : pace.kind === "eta" ? W * Math.max(0.22, Math.min(0.8, span / (span + pace.months * 30))) : pace.kind === "flat" ? W * 0.62 : W * 0.34;
+        var xn = done ? W : pace.kind === "eta" ? W * Math.max(0.22, Math.min(0.8, span / (span + pace.months * 30))) : pace.kind === "flat" ? W * 0.62 : W * 0.34;
         var cum = 0, pts = [[0, 0]];
         evs.forEach(function (e) { cum = Math.max(0, cum + e.delta); pts.push([(lead + Math.max(0, daysBetween(evs[0].fecha, e.fecha))) / span * xn, cum]); });
-        pts.push([xn, o.bal]);
+        pts.push([xn, bal]);
         var d = "", px = 0, py = 0;
         pts.forEach(function (q, k) {
           var x = Math.min(xn, q[0]), y = Y(q[1]), mx = (px + x) / 2;
@@ -8574,9 +8577,10 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           px = x; py = y;
         });
         var pj = pace.kind === "eta" ? '<path class="go-pj" d="M' + px.toFixed(1) + " " + py.toFixed(1) + " L" + W + " " + TOP + '"></path>' : pace.kind === "flat" ? '<path class="go-pj" d="M' + px.toFixed(1) + " " + py.toFixed(1) + " L" + W + " " + py.toFixed(1) + '"></path>' : "";
-        return { h: '<span class="go-plot"><svg viewBox="0 0 ' + W + " " + HH + '" preserveAspectRatio="none" aria-hidden="true"><path class="go-ar" d="' + d + " L" + px.toFixed(1) + " " + HH + " L0 " + HH + ' Z"></path><path d="' + d + '"></path>' + pj + "</svg>" +
-          '<i class="go-now" style="left:' + (px / W * 100).toFixed(1) + "%;top:" + (py / HH * 100).toFixed(1) + '%"></i>' + (pace.kind === "eta" ? '<i class="go-end" style="left:100%;top:' + (TOP / HH * 100).toFixed(1) + '%"></i><span class="go-eta">' + etaLabel(pace) + "</span>" : "") + "</span>" };
+        return '<span class="go-plot"><svg viewBox="0 0 ' + W + " " + HH + '" preserveAspectRatio="none" aria-hidden="true"><path class="go-ar" d="' + d + " L" + px.toFixed(1) + " " + HH + " L0 " + HH + ' Z"></path><path d="' + d + '"></path>' + pj + "</svg>" +
+          '<i class="go-now" style="left:' + (px / W * 100).toFixed(1) + "%;top:" + (py / HH * 100).toFixed(1) + '%"></i>' + (pace.kind === "eta" ? '<i class="go-end" style="left:100%;top:' + (TOP / HH * 100).toFixed(1) + '%"></i><span class="go-eta">' + etaLabel(pace) + "</span>" : "") + "</span>";
       }
+      window.__goPlot = plotCore;
       function paint() {
         if (sel != null && !info.some(function (x) { return String(x.g.id) === sel; })) sel = null;
         var V = $("go-v"), vt = money(saved, cur);
@@ -12265,7 +12269,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var sgDemo = null;
     function sgDemoDb() {
       if (sgDemo) return sgDemo;
-      var t = new Date(Date.now() - 3 * 864e5).toISOString(), due = addDaysIso(today(), 9);
+      var ago = function (n) { return new Date(Date.now() - n * 864e5).toISOString(); }, t = ago(3), due = addDaysIso(today(), 9);
       sgDemo = {
         goals: [
           { id: "d1", code: "K7Q2MX", leader: "demo-yo", name: "Botella para el viernes", target: 40, cur: "USD", due: addDaysIso(today(), 2), icon: "gift", color: "#e08a00", split: "equal", status: "open", created_at: t,
@@ -12273,7 +12277,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
             sg_aportes: [{ id: "a1", user_id: "demo-yo", amount: 10, status: "ok", created_at: t }, { id: "a2", user_id: "demo-ana", amount: 10, status: "pend", created_at: t }] },
           { id: "d2", code: "P4WZ8N", leader: "demo-luis", name: "Viaje a la playa", target: 600, cur: "USD", due: due, icon: "plane", color: "#0e9aa7", split: "free", status: "open", created_at: t,
             sg_members: [{ user_id: "demo-luis", name: "Luis" }, { user_id: "demo-yo", name: "Tú" }, { user_id: "demo-ana", name: "Ana" }],
-            sg_aportes: [{ id: "a3", user_id: "demo-luis", amount: 150, status: "ok", created_at: t }, { id: "a4", user_id: "demo-ana", amount: 120, status: "ok", created_at: t }] }
+            sg_aportes: [{ id: "a3", user_id: "demo-luis", amount: 80, status: "ok", created_at: ago(40) }, { id: "a4", user_id: "demo-ana", amount: 60, status: "ok", created_at: ago(27) }, { id: "a5", user_id: "demo-luis", amount: 70, status: "ok", created_at: ago(13) }, { id: "a6", user_id: "demo-ana", amount: 60, status: "ok", created_at: ago(4) }] }
         ],
         hidden: [{ id: "d3", code: "7K2Q4M", leader: "demo-mari", name: "Regalo para mamá", target: 90, cur: "USD", due: null, icon: "heart", color: "#e5133f", split: "equal", status: "open", created_at: t,
           sg_members: [{ user_id: "demo-mari", name: "Mari" }, { user_id: "demo-luis", name: "Luis" }], sg_aportes: [] }]
@@ -12372,15 +12376,16 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     /* Lista en la página de Ahorro */
     function sgCard(g) {
       var c = sgCalc(g), mem = g.sg_members || [];
-      var tag = c.done ? '<span class="sg-tag ok">' + sgSvg("check", 2.4) + "Lograda</span>" :
-        c.lead ? '<span class="sg-tag lead">' + sgSvg("crown") + "Eres el líder</span>" :
-        '<span class="sg-tag">Líder: ' + esc((mem.filter(function (m) { return m.user_id === g.leader; })[0] || {}).name || "—") + "</span>";
       var pendN = (g.sg_aportes || []).filter(function (a) { return a.status !== "ok"; }).length;
+      // Mismo estilo que las metas propias: encabezado y gráfico con los aportes confirmados
+      var evs = (g.sg_aportes || []).filter(function (a) { return a.status === "ok"; }).map(function (a) { return { fecha: String(a.created_at || "").slice(0, 10) || today(), delta: Number(a.amount) || 0, it: { id: 0 } }; })
+        .sort(function (a, b) { return a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0; });
+      var sm = function (v) { var k = sgCur(g.cur); return k && Math.abs(v - Math.round(v)) < 0.005 ? money(v, k, 0) : sgMoney(v, g.cur); };
+      var chart = window.__goPlot ? window.__goPlot(evs, c.ok, g.target, c.done ? { kind: "done" } : goalPace({ meta: g.target }, evs, c.ok)) : "";
+      var foot = c.lead && pendN && !c.done ? '<span class="sg-tag lead">' + pendN + " por confirmar</span>" : c.lead ? '<span class="sg-tag lead">' + sgSvg("crown") + "Líder</span>" : "";
       return '<li><button type="button" class="sg-card' + (c.done ? " done" : "") + '" data-sg="' + esc(g.id) + '" style="--gc:' + esc(g.color) + '">' +
-        '<span class="sg-top">' + goalAvatar(sgLook(g)) + '<span class="sg-tt"><b>' + esc(g.name) + "</b><small>" + sgMoney(c.ok, g.cur) + " de " + sgMoney(g.target, g.cur) +
-        (c.lead && pendN && !c.done ? ' · <em>' + pendN + " por confirmar</em>" : "") + "</small></span><span class=\"sg-pct\">" + fmtPct(c.pct) + "</span></span>" +
-        '<span class="sg-bar"><i class="p" style="width:' + c.pctP.toFixed(1) + '%"></i><i style="width:' + c.pct.toFixed(1) + '%"></i></span>' +
-        '<span class="sg-foot"><span class="sg-stack">' + mem.slice(0, 5).map(function (m) { return sgAv(m, "sm"); }).join("") + (mem.length > 5 ? '<span class="sg-av sm more">+' + (mem.length - 5) + "</span>" : "") + "</span>" + tag + "</span></button></li>";
+        '<span class="go-t"><i class="go-ic">' + (g.icon && GOAL_SVG[g.icon] ? goalSvg(g.icon) : esc(accInitials(g.name))) + '</i><span class="go-tx"><span class="go-n">' + esc(g.name) + '</span><span class="go-p"><b>' + (c.done ? "Lograda ✓" : fmtPct(c.pct)) + "</b>" + (c.done ? "" : " de " + sm(g.target)) + '</span></span><span class="go-a">' + sm(c.ok) + "</span></span>" + chart +
+        '<span class="sg-foot"><span class="sg-stack">' + mem.slice(0, 5).map(function (m) { return sgAv(m, "sm"); }).join("") + (mem.length > 5 ? '<span class="sg-av sm more">+' + (mem.length - 5) + "</span>" : "") + "</span>" + foot + "</span></button></li>";
     }
     function sgInvCard() {
       var v = SG.inv; if (!v) return "";
@@ -12406,6 +12411,16 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         return;
       }
       box.innerHTML = sgInvCard() + '<ul class="sg-list">' + list.map(sgCard).join("") + "</ul>" + (SG.err ? '<p class="hint sg-err">' + esc(SG.err) + "</p>" : "") + acts;
+    }
+    // Al aparecer la sección, sus gráficos se dibujan de izquierda a derecha, igual que en Metas
+    if (window.IntersectionObserver && $("sg-sec")) {
+      var sgSeen = false;
+      new IntersectionObserver(function (es) { es.forEach(function (e) {
+        if (!e.isIntersecting) { sgSeen = false; return; }
+        if (sgSeen) return; sgSeen = true;
+        var b = $("sg-box"); if (!b || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+        b.classList.add("pre"); void b.offsetWidth; b.classList.remove("pre");
+      }); }, { threshold: 0.12 }).observe($("sg-sec"));
     }
     /* Detalle de una meta compartida */
     function sgRing(c, col) {
