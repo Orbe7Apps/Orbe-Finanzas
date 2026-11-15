@@ -2097,6 +2097,11 @@ html.loc-none [data-disp="VES"], html.loc-none .rc-usd { display: none !importan
 :is(#hist-list, #ad-list) .hrow[data-hid] { position: relative; touch-action: pan-y; }
 :is(#hist-list, #ad-list) .hrow[style*="--sx"] > * { transform: translateX(var(--sx, 0px)); transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1); }
 :is(#hist-list, #ad-list) .hrow.drag > * { transition: none; }
+/* El texto se corre solo hasta el borde de la tarjeta (no se corta) y el icono se desvanece para dejar sitio a la papelera */
+:is(#hist-list, #ad-list) .hrow[style*="--sx"] > .hmain { transform: translateX(calc(var(--sx, 0px) * 0.6)); }
+:is(#hist-list, #ad-list) .hrow[data-hid] > .hic { transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease; }
+:is(#hist-list, #ad-list) .hrow.drag > .hic { transition: opacity 0.2s ease; }
+:is(#hist-list, #ad-list) .hrow.drag > .hic, :is(#hist-list, #ad-list) .hrow.open > .hic { opacity: 0; }
 :is(#hist-list, #ad-list) .hrow[data-hid]::after { content: ""; position: absolute; right: 2px; top: 8px; bottom: 8px; width: 66px; border-radius: 18px; background: var(--out) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3'/%3E%3C/svg%3E") center / 22px no-repeat; opacity: 0; transform: scale(0.7); transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), width 0.25s ease; pointer-events: none; }
 :is(#hist-list, #ad-list) .hrow.drag::after, :is(#hist-list, #ad-list) .hrow.open::after { opacity: 1; transform: none; }
 :is(#hist-list, #ad-list) .hrow.gone { transition: opacity 0.25s ease, max-height 0.26s ease, padding 0.26s ease; opacity: 0; max-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; overflow: hidden; }
@@ -2130,7 +2135,7 @@ html.bg-lock, html.bg-lock body { overflow: hidden !important; overscroll-behavi
 .sheet-backdrop, .sheet, .dial { overscroll-behavior: contain; }
 .sheet-backdrop { background: rgba(10, 8, 30, 0.4) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 /* Historial: cada día en su tarjeta y más aire entre movimientos */
-#hist-list .hday, #ad-list .hday { background: var(--surface); border-radius: 20px; padding: 4px 14px 2px; margin-top: 14px; }
+#hist-list .hday, #ad-list .hday { background: var(--surface); border-radius: 20px; padding: 4px 14px 2px; margin-top: 14px; overflow-x: clip; }
 #hist-list .hday:first-child, #ad-list .hday:first-child { margin-top: 6px; }
 #hist-list .hday-h, #ad-list .hday-h { padding: 12px 2px 4px; }
 #hist-list .hrow, #ad-list .hrow { padding-top: 14px !important; padding-bottom: 14px !important; border-top-color: color-mix(in srgb, var(--line) 70%, transparent); }
