@@ -8464,9 +8464,15 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       function rx(q) { var c = Math.cos(q), n = Math.sin(q); return [1, 0, 0, 0, c, -n, 0, n, c]; }
       function ry(q) { var c = Math.cos(q), n = Math.sin(q); return [c, 0, n, 0, 1, 0, -n, 0, c]; }
       function mul(x, y) { var m = []; for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) m[i * 3 + j] = x[i * 3] * y[j] + x[i * 3 + 1] * y[3 + j] + x[i * 3 + 2] * y[6 + j]; return m; }
-      var HOME = mul(rx(-1.02), ry(0.35)), R = HOME.slice(), vx = 0, vy = 0;
+      // Al entrar se ve de frente, plano como siempre (2D). Al girarlo con el dedo pasa a 3D: las órbitas se inclinan (tf va de 0 a 1).
+      var HOME = rx(-Math.PI / 2), R = HOME.slice(), vx = 0, vy = 0, tf = 0, is3d = false, homing = false, freeUntil = 0;
+      function ortho(m) { // deja la matriz como un giro válido tras mezclarla
+        var a = [m[0], m[1], m[2]], b = [m[3], m[4], m[5]], n = Math.hypot(a[0], a[1], a[2]) || 1; a = a.map(function (v) { return v / n; });
+        var d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; b = b.map(function (v, i) { return v - d * a[i]; }); n = Math.hypot(b[0], b[1], b[2]) || 1; b = b.map(function (v) { return v / n; });
+        return [a[0], a[1], a[2], b[0], b[1], b[2], a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+      }
       function proj(x, y, z) { var X = R[0] * x + R[1] * y + R[2] * z, Y = R[3] * x + R[4] * y + R[5] * z, Z = R[6] * x + R[7] * y + R[8] * z, k = F / (F + Z); return [CX + X * k, CY + Y * k, Z]; }
-      function ringPt(q, th) { var x = q.r * Math.cos(th), z = q.r * Math.sin(th), c = Math.cos(q.tx), n = Math.sin(q.tx), y1 = -z * n, z1 = z * c; c = Math.cos(q.tz); n = Math.sin(q.tz); return [x * c - y1 * n, x * n + y1 * c, z1]; }
+      function ringPt(q, th) { var x = q.r * Math.cos(th), z = q.r * Math.sin(th), c = Math.cos(q.tx * tf), n = Math.sin(q.tx * tf), y1 = -z * n, z1 = z * c; c = Math.cos(q.tz * tf); n = Math.sin(q.tz * tf); return [x * c - y1 * n, x * n + y1 * c, z1]; }
       // Unas pocas partículas, muy tenues, girando alrededor
       var stars = []; (function () { var seed = cfg.seed || 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
         for (var i = 0; i < 40; i++) { var r = 70 + Math.pow(rnd(), 0.8) * 75; stars.push({ r: r, a: rnd() * 6.283, y: (rnd() - 0.5) * (10 + r * 0.06), s: 0.5 + rnd() * 0.6, o: 0.10 + rnd() * 0.14, w: 0.5 / Math.sqrt(r) }); } })();
@@ -8483,28 +8489,26 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       function draw() {
         size(); ctx.clearRect(0, 0, VW, VH);
         var its = [], i, k, bg = rgb("var(--bg)"), sf = rgb("var(--surface)"), mu = rgb("var(--muted)");
-        for (i = 0; i < stars.length; i++) { var st = stars[i], sp = proj(st.r * Math.cos(st.a), st.y, st.r * Math.sin(st.a)); its.push({ z: sp[2], t: 0, p: sp, s: st }); }
+        if (tf > 0.02) for (i = 0; i < stars.length; i++) { var st = stars[i], sp = proj(st.r * Math.cos(st.a), st.y, st.r * Math.sin(st.a)); its.push({ z: sp[2], t: 0, p: sp, s: st }); }
         rings.forEach(function (q) {
-          var f = frac(q.row), on = sel === q.id, dim = sel != null && !on, P = [], nl = Math.round(f * SEG), firstLit = null, lastLit = null;
+          var f = frac(q.row), on = sel === q.id, dim = sel != null && !on, P = [], nl = Math.round(f * SEG);
           for (k = 0; k <= SEG; k++) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832); P.push(proj(t3[0], t3[1], t3[2])); }
           // Guía (toda la vuelta) y avance, en tramos cortos ordenados por profundidad; todo opaco para que las uniones no se noten
           [[SEG, false], [nl, true]].forEach(function (rg) {
             var run = null;
             for (k = 0; k < rg[0]; k++) {
               var mz = (P[k][2] + P[k + 1][2]) / 2, front = mz < 0;
-              if (!run || run.front !== front || run.n >= 8) { run = { z: 0, n: 0, zs: 0, t: 1, pts: [P[k]], q: q, lit: rg[1], on: on, dim: dim, front: front }; its.push(run); if (rg[1]) { lastLit = run; if (!firstLit) firstLit = run; } }
+              if (!run || run.front !== front || run.n >= 8) { run = { z: 0, n: 0, zs: 0, t: 1, pts: [P[k]], q: q, lit: rg[1], on: on, dim: dim, front: front }; its.push(run); }
               run.pts.push(P[k + 1]); run.n++; run.zs += mz; run.z = run.zs / run.n + (rg[1] ? -0.6 : 0);
             }
           });
-          // Bolita de la punta: siempre opaca y por encima del final de su línea
-          if (lastLit && f < 0.999) its.push({ z: lastLit.z - 1.2, t: 2, p: P[nl], q: q, on: on, dim: dim });
         });
         its.push({ z: 0, t: 3 });
         its.sort(function (x, y) { return y.z - x.z; });
         ctx.lineJoin = "round"; ctx.lineCap = "round";
         its.forEach(function (it) {
           ctx.globalAlpha = 1;
-          if (it.t === 0) { ctx.globalAlpha = it.s.o; ctx.fillStyle = css(mu); ctx.beginPath(); ctx.arc(it.p[0], it.p[1], it.s.s, 0, 6.3); ctx.fill(); return; }
+          if (it.t === 0) { ctx.globalAlpha = it.s.o * tf; ctx.fillStyle = css(mu); ctx.beginPath(); ctx.arc(it.p[0], it.p[1], it.s.s, 0, 6.3); ctx.fill(); return; }
           if (it.t === 3) { // núcleo: disco con sombra y un halo
             ctx.shadowColor = "rgba(20,16,50,.2)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "transparent";
             ctx.strokeStyle = mix(sf, bg, 0.55); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(CX, CY, CORE + 3, 0, 6.3); ctx.stroke(); return; }
@@ -8513,7 +8517,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
             ctx.lineWidth = it.lit ? w : SW; ctx.strokeStyle = it.lit ? lit : mix(c, bg, it.dim ? 0.06 : 0.16);
             if (it.lit && it.on) { ctx.shadowColor = css(c); ctx.shadowBlur = 9; }
             ctx.beginPath(); it.pts.forEach(function (pt, j) { if (j) ctx.lineTo(pt[0], pt[1]); else ctx.moveTo(pt[0], pt[1]); }); ctx.stroke(); ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
-          } else { ctx.fillStyle = it.dim ? mix(sf, bg, 0.6) : css(sf); ctx.beginPath(); ctx.arc(it.p[0], it.p[1], w / 2 + 2.5, 0, 6.3); ctx.fill(); ctx.strokeStyle = lit; ctx.lineWidth = 3; ctx.stroke(); }
+          }
         });
         // El núcleo es como un vidrio esmerilado: los anillos que le pasan por delante se ven tenues y el texto siempre se lee
         ctx.globalAlpha = 0.86; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE - 1, 0, 6.3); ctx.fill();
@@ -8580,52 +8584,69 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         if (nsig !== sig) { sig = nsig; build(); } else applySel(false);
         start();
       }
-      // Girar con el dedo en cualquier dirección, con inercia. El gesto empieza de lado (hacia arriba o abajo se desplaza la página).
+      // Girar con el dedo en cualquier dirección, con inercia. El primer gesto empieza de lado (hacia arriba o abajo se desplaza la página);
+      // mientras lo estás moviendo, y unos segundos después de soltarlo, cualquier arrastre sobre el orbe lo gira (también hacia arriba y abajo).
       var drag = null;
+      box.addEventListener("touchstart", function (e) { if (Date.now() < freeUntil && e.cancelable) e.preventDefault(); }, { passive: false });
+      box.addEventListener("touchmove", function (e) { if ((drag && drag.rot || Date.now() < freeUntil) && e.cancelable) e.preventDefault(); }, { passive: false });
       function pt(e) { var r = box.getBoundingClientRect(); return { x: (e.clientX - r.left) * VW / r.width, y: (e.clientY - r.top) * VH / r.height }; }
-      box.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId }; vx = vy = 0; });
+      box.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY, moved: 0, ax: 0, ay: 0, rot: false, id: e.pointerId }; vx = vy = 0; });
       box.addEventListener("pointermove", function (e) {
         if (!drag || e.pointerId !== drag.id) return;
         var dx = (e.clientX - drag.x) * 0.0095, dy = (e.clientY - drag.y) * 0.0095; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
-        if (drag.moved > 0.05) { try { box.setPointerCapture(e.pointerId); } catch (x) {} box.classList.add("grab"); R = mul(mul(rx(-dy), ry(dx)), R); vx = dx; vy = -dy; if (raf) return; draw(); start(); }
+        drag.ax += Math.abs(dx); drag.ay += Math.abs(dy);
+        if (!drag.rot && drag.moved > 0.05) {
+          // Fuera de la ventana libre, un gesto que arranca hacia arriba o abajo es para desplazar la página: no se agarra
+          if (e.pointerType === "touch" && Date.now() >= freeUntil && drag.ay > drag.ax) { drag = null; return; }
+          drag.rot = true; try { box.setPointerCapture(e.pointerId); } catch (x) {} box.classList.add("grab");
+        }
+        if (drag.rot) { is3d = true; homing = false; box.setAttribute("data-3d", "1"); freeUntil = Date.now() + 3000; R = mul(mul(rx(-dy), ry(dx)), R); vx = dx; vy = -dy; if (!raf) { draw(); start(); } }
       });
       function up(e) {
-        if (!drag) return; var moved = drag.moved; drag = null; box.classList.remove("grab");
-        if (moved > 0.05) { start(); return; }
+        if (!drag) return; var moved = drag.moved, rot = drag.rot; drag = null; box.classList.remove("grab");
+        if (rot) { freeUntil = Date.now() + 3000; start(); return; }
+        if (moved > 0.05) return;
         vx = vy = 0;
         var m = pt(e), hit = null, bd = Math.max(13, SW);
         if (Math.hypot(m.x - CX, m.y - CY) >= CORE) rings.forEach(function (q) { for (var k = 0; k < SEG; k += 2) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832), pp = proj(t3[0], t3[1], t3[2]), d = Math.hypot(pp[0] - m.x, pp[1] - m.y); if (d < bd) { bd = d; hit = q.id; } } });
         if (hit != null) pick(hit);
         else if (sel != null) { sel = null; applySel(true); }
+        else if (is3d && Math.hypot(m.x - CX, m.y - CY) < CORE) goHome();   // tocar el centro sin nada elegido: vuelve a la vista plana
       }
+      function goHome() { homing = true; is3d = false; vx = vy = 0; freeUntil = 0; box.setAttribute("data-3d", "0"); if (RM) { R = HOME.slice(); homing = false; tf = 0; draw(); } else start(); }
       box.addEventListener("pointerup", up); box.addEventListener("pointercancel", function () { drag = null; box.classList.remove("grab"); });
       if (list) list.addEventListener("click", function (e) { var b = e.target.closest("[data-acc-pick]"); if (b) pick(b.getAttribute("data-acc-pick"), true); });
       // Animación solo cuando el orbe se ve y la app está al frente
       function tick(now) {
         raf = 0; var dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
         if (!drag) {
-          if (Math.abs(vx) + Math.abs(vy) > 0.0004) { R = mul(mul(rx(vy), ry(vx)), R); vx *= 0.95; vy *= 0.95; }
-          else if (!RM) R = mul(R, ry(dt * 0.12));
+          if (homing) { // vuelve suave a la vista de frente
+            var e2 = 0; R = ortho(R.map(function (v, i) { var d = HOME[i] - v; e2 += d * d; return v + d * Math.min(1, dt * 7); }));
+            if (e2 < 0.00002) { R = HOME.slice(); homing = false; }
+          } else if (Math.abs(vx) + Math.abs(vy) > 0.0004) { R = mul(mul(rx(vy), ry(vx)), R); vx *= 0.95; vy *= 0.95; }
         }
+        var tgt = is3d ? 1 : 0; if (Math.abs(tgt - tf) > 0.002) tf += (tgt - tf) * Math.min(1, dt * 5); else tf = tgt;
         if (!RM) {
           stars.forEach(function (st) { st.a += st.w * dt; });
           rings.forEach(function (q) { q.a0 += q.w * dt * (sel === q.id ? 1 + spin * 6 : 1); });
         }
         spin *= 0.94;
         draw();
-        var moving = !RM || drag || Math.abs(vx) + Math.abs(vy) > 0.0004;
-        if (moving && seen && !document.hidden && !activeView()) raf = requestAnimationFrame(tick);
+        var moving = !RM || drag || homing || tf !== tgt || Math.abs(vx) + Math.abs(vy) > 0.0004;
+        if (moving && seen && !document.hidden && here()) raf = requestAnimationFrame(tick);
       }
-      function start() { if (raf || !seen || document.hidden) return; last = 0; raf = requestAnimationFrame(tick); }
+      // Solo se anima en su pantalla: Inicio (sin vista abierta) o la vista que indique cfg.view
+      function here() { return activeView() === (cfg.view || null); }
+      function start() { if (raf || !seen || document.hidden || !here()) return; last = 0; raf = requestAnimationFrame(tick); }
       if (window.IntersectionObserver) new IntersectionObserver(function (en) { seen = en[0].isIntersecting; if (seen) start(); }, { threshold: 0.05 }).observe(box);
       else { seen = true; start(); }
       document.addEventListener("visibilitychange", start);
-      new MutationObserver(function () { if (!activeView()) start(); }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      new MutationObserver(function () { start(); }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
       // Si cambia el tema o el modo blanco y negro, se vuelven a leer los colores
       new MutationObserver(function () { ccache = {}; kick(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
       if (window.matchMedia) { try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { ccache = {}; kick(); }); } catch (x) {} }
       if (window.ResizeObserver) new ResizeObserver(function () { kick(); }).observe(box);
-      return { update: update, pick: pick, sel: function () { return sel; }, home: function () { R = HOME.slice(); vx = vy = 0; kick(); } };
+      return { update: update, pick: pick, sel: function () { return sel; }, home: goHome, state: function () { return { R: R.slice(), homing: homing, is3d: is3d, tf: tf, raf: !!raf, seen: seen }; } };
     }
     // Cuentas (Inicio): un anillo por cuenta con saldo, de mayor a menor
     (function () {
@@ -8641,6 +8662,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         open: function (id) { openAccd(id); } });
       if (!o) return;
       window.__accOrb = function (rows, tot, ms, D) { o.update(rows, { total: tot, miss: ms, cur: D }); };
+      window.__orbA = o;
       try { renderAccounts(); } catch (e) {}
     })();
     // Metas (Ahorro): arriba, el mismo orbe de Cuentas (un anillo por meta, el total en el centro); debajo, una tarjeta por meta.
@@ -8652,7 +8674,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       var info = [], sel = null;
       function short(v, c) { return money(v, c, Math.abs(v - Math.round(v)) < 0.005 ? 0 : 2); }
       function hid(t) { return state.hideSav ? "••••" : t; }
-      var orb = makeOrb({ box: $("go-sum"), seed: 7, zeroHide: true,
+      var orb = makeOrb({ box: $("go-sum"), view: "goals", seed: 7, zeroHide: true,
         rings: function (d) { return d.slice(0, 5); },
         id: function (x) { return x.g.id; }, color: function (x) { return x.color; },
         sig: function (x) { return x.g.id + ":" + x.p.toFixed(4) + ":" + x.color; },
@@ -8661,6 +8683,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           return { k: "Ahorrado", v: hid(money(ex.saved || 0, ex.cur)), s: "de " + hid(short(ex.target || 0, ex.cur)) };
         },
         onSel: function (id) { sel = id; paint(); } });
+      window.__orbG = orb;
       function etaLabel(pace) {
         if (pace.kind !== "eta") return "";
         if (pace.months < 1) return "Este mes";
