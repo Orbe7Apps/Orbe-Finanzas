@@ -2839,6 +2839,68 @@ main > .panel.fz-today { background: none !important; padding: 0 !important; mar
 .ai-cloud-top > div, .ai-cloud-top p { text-align: center; }
 .ai-cloud ol, .ai-cloud ul { text-align: left; }
 
+/* Asistente como conversación: saludo con un resplandor, sugerencias en tarjetas y caja para preguntar */
+.ai-chat { display: flex; flex-direction: column; min-height: 82dvh; padding-top: 14px; overflow-x: hidden; }
+.ai-glow { position: absolute; left: 0; right: 0; top: 0; height: 330px; border-radius: 28px 28px 0 0; pointer-events: none; opacity: .95; overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); transition: height .5s cubic-bezier(.32,.72,0,1), opacity .5s ease; }
+.ai-glow::before { content: ""; position: absolute; inset: 0; animation: aiGlow 9s ease-in-out infinite alternate;
+  background: radial-gradient(110% 85% at 12% 0%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 62%), radial-gradient(85% 75% at 96% 6%, color-mix(in srgb, var(--in) 26%, transparent), transparent 62%); }
+@keyframes aiGlow { from { transform: scale(1) translateX(0); } to { transform: scale(1.12) translateX(-3%); } }
+html.mono .ai-glow::before { background: radial-gradient(110% 85% at 12% 0%, color-mix(in srgb, var(--ink) 16%, transparent), transparent 62%); }
+.ai-chat.chat .ai-glow { height: 150px; opacity: .6; }
+.ai-chat > :not(.ai-glow) { position: relative; }
+.ai-chat > * { flex-shrink: 0; }   /* nada se encoge: la hoja se desplaza */
+.ai-bar { display: flex; align-items: center; gap: 8px; }
+.ai-bar .ai-month { margin: 0 auto 0 0 !important; }
+.ai-ib { width: 40px; height: 40px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: none; }
+.ai-ib svg { width: 19px; height: 19px; }
+.ai-hero { padding: 34px 2px 8px; display: grid; grid-template-rows: 1fr; transition: grid-template-rows .45s cubic-bezier(.32,.72,0,1), opacity .3s ease, padding .45s cubic-bezier(.32,.72,0,1); }
+.ai-hero h2 { margin: 0; overflow: hidden; font-family: var(--display); font-size: 2.05rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1.12; text-wrap: balance; animation: aiUp .6s cubic-bezier(.32,.72,0,1) backwards; }
+.ai-hero #ai-hi { color: var(--accent); }
+.ai-chat.chat .ai-hero { grid-template-rows: 0fr; opacity: 0; padding-top: 0; padding-bottom: 0; }
+@keyframes aiUp { from { opacity: 0; transform: translateY(14px); } }
+.ai-thread { flex: 1 0 auto; display: grid; align-content: start; gap: 14px; padding: 14px 0 6px; min-height: 12px; }
+.ai-msg { display: grid; gap: 6px; animation: aiUp .45s cubic-bezier(.32,.72,0,1) backwards; min-width: 0; }
+.ai-msg.me { justify-items: end; }
+.ai-msg.me .ai-b { background: var(--accent); color: var(--accent-ink, #fff); border-radius: 20px 20px 6px 20px; padding: 10px 15px; max-width: 86%; font-weight: 600; font-size: .95rem; }
+.ai-msg.bot .ai-b { background: var(--fill, color-mix(in srgb, var(--ink) 6%, transparent)); border-radius: 6px 22px 22px 22px; padding: 14px; font-size: .93rem; line-height: 1.45; min-width: 0; }
+.ai-b p { margin: 0 0 8px; } .ai-b p:last-child { margin-bottom: 0; }
+.ai-b .ai-lead b { font-family: var(--display); font-size: 1.5rem; letter-spacing: -0.03em; display: block; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ai-who { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; }
+.ai-orb { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--accent); box-shadow: 0 3px 10px color-mix(in srgb, var(--ink) 12%, transparent); flex: none; }
+.ai-orb svg { width: 16px; height: 16px; }
+.ai-rows { display: grid; gap: 8px; margin: 10px 0 2px; }
+.ai-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.ai-row > i { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--accent)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, var(--accent)) 22%, transparent); }
+.ai-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ai-row span small { display: block; font-weight: 500; color: var(--muted); font-size: .76rem; }
+.ai-row b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ai-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ai-acts button { border: 0; background: var(--surface); color: var(--ink); font: inherit; font-size: .82rem; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; }
+.ai-dock { position: sticky !important; bottom: 0; margin: 0 -20px calc(-20px - env(safe-area-inset-bottom, 0px)); padding: 16px 20px calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 12px; background: linear-gradient(transparent, var(--surface) 26px); z-index: 2; }
+.ai-chat.chat #ai-brand { display: none; }
+.ai-sug { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ai-card { display: grid; align-content: space-between; gap: 14px; min-height: 96px; text-align: left; border: 0; border-radius: 22px; padding: 14px; background: var(--fill, color-mix(in srgb, var(--ink) 6%, transparent)); color: var(--ink); font: inherit; font-size: .93rem; font-weight: 600; line-height: 1.3; cursor: pointer; animation: aiUp .5s cubic-bezier(.32,.72,0,1) backwards; transition: transform .15s ease; -webkit-tap-highlight-color: transparent; }
+.ai-card:active { transform: scale(.97); }
+.ai-card:nth-child(2) { animation-delay: .05s; } .ai-card:nth-child(3) { animation-delay: .1s; } .ai-card:nth-child(4) { animation-delay: .15s; }
+.ai-card:nth-child(n+5) { display: none; }
+.ai-card i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--accent); }
+.ai-card i svg { width: 16px; height: 16px; }
+/* Ya en conversación, las sugerencias pasan a una fila de píldoras que se desliza */
+.ai-chat.chat .ai-sug { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 0 20px; scrollbar-width: none; }
+.ai-chat.chat .ai-sug::-webkit-scrollbar { display: none; }
+.ai-chat.chat .ai-card, .ai-chat.chat .ai-card:nth-child(n+5) { display: block; min-height: 0; flex: none; padding: 9px 14px; border-radius: 999px; font-size: .82rem; white-space: nowrap; animation: none; }
+.ai-chat.chat .ai-card i { display: none; }
+.ai-form { display: flex; align-items: center; gap: 8px; background: var(--fill, color-mix(in srgb, var(--ink) 6%, transparent)); border-radius: 999px; padding: 6px 6px 6px 18px; }
+.ai-form input { flex: 1; min-width: 0; border: 0 !important; background: none !important; box-shadow: none !important; outline: 0; font: inherit; font-size: 1rem; color: var(--ink); padding: 8px 0 !important; margin: 0 !important; height: auto !important; }
+.ai-send { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink, #fff); display: grid; place-items: center; cursor: pointer; flex: none; transition: transform .15s ease, opacity .2s ease; }
+.ai-send svg { width: 18px; height: 18px; }
+.ai-send:active { transform: scale(.92); }
+.ai-chat .ai-cloud { margin: 6px 0 14px !important; }
+.ai-b .ai-score { padding: 0 0 4px !important; }
+.ai-b .ai-item { background: var(--surface) !important; }
+@media (prefers-reduced-motion: reduce) { .ai-glow::before, .ai-hero h2, .ai-msg, .ai-card { animation: none; } .ai-hero, .ai-glow { transition: none; } }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -4502,20 +4564,15 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   </div>
   <button class="ai-fab" id="ai-btn" type="button" aria-label="Asistente financiero con IA" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"></path><path d="M19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z"></path></svg></button>
   <div class="sheet-backdrop" id="ai-sheet" hidden>
-    <section class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="h-ai">
-      <div class="sheet-head"><h2 id="h-ai">Asistente financiero</h2><button type="button" class="del" id="ai-close" aria-label="Cerrar">✕</button></div>
-      <div class="ai-month"><button type="button" class="cal-nav" id="ai-prev" aria-label="Mes anterior">‹</button><span id="ai-mlabel"></span><button type="button" class="cal-nav" id="ai-next" aria-label="Mes siguiente">›</button></div>
-      <div class="ai-score" id="ai-score"></div>
-      <div class="ai-stats" id="ai-stats"></div>
-      <p class="hint" id="ai-sub" hidden></p>
-      <div id="ai-groups"></div>
-      <ul class="ai-list" id="ai-list" hidden></ul>
-      <button type="button" class="ai-morebtn" id="ai-cloud-tog">Plan personalizado con IA</button>
-      <div class="ai-quick" id="ai-quick" hidden>
-        <button type="button" data-aiq="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"></path></svg>Ver gastos por categoría</button>
-        <button type="button" data-aiq="goal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg>Crear una meta</button>
-        <button type="button" data-aiq="pay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>Programar un pago</button>
+    <section class="panel sheet ai-chat" id="ai-panel" role="dialog" aria-modal="true" aria-labelledby="h-ai">
+      <div class="ai-glow" aria-hidden="true"></div>
+      <div class="ai-bar">
+        <div class="ai-month"><button type="button" class="cal-nav" id="ai-prev" aria-label="Mes anterior">‹</button><span id="ai-mlabel"></span><button type="button" class="cal-nav" id="ai-next" aria-label="Mes siguiente">›</button></div>
+        <button type="button" class="ai-ib" id="ai-cfg-open" aria-label="Conectar una IA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"></path><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path></svg></button>
+        <button type="button" class="del" id="ai-close" aria-label="Cerrar">✕</button>
       </div>
+      <div class="ai-hero" id="ai-hero"><h2 id="h-ai"><span id="ai-hi">Hola</span><br>¿En qué te ayudo?</h2></div>
+      <div class="ai-thread" id="ai-thread" aria-live="polite"></div>
       <div class="ai-cloud" id="ai-cloud" hidden>
         <div class="ai-cloud-top"><span class="ai-spark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"></path><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path></svg></span><div><div class="ai-cloud-head">Plan personalizado con IA</div><p class="hint" id="ai-key-state"></p></div></div>
         <ol class="ai-steps" id="ai-steps">
@@ -4533,6 +4590,22 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           <p class="error" id="ai-key-err" role="alert"></p>
           <p class="hint">La clave se guarda solo en este teléfono. Al pedir el análisis se envían únicamente totales por categoría y por mes, sin nombres de cuentas ni notas. Créala en console.anthropic.com y ponle un límite de gasto. Es probable que necesites el VPN activado para esta función.</p>
         </div>
+      </div>
+      <div class="ai-dock">
+        <div class="ai-who" id="ai-brand"><span class="ai-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"></circle><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"></path><path d="M20.5 12A8.5 8.5 0 0 1 6 18" opacity=".45"></path><path d="M6 18A8.5 8.5 0 0 1 12 3.5" opacity=".2"></path></svg></span>Orbe</div>
+        <div class="ai-sug" id="ai-sug"><button type="button" class="ai-card" data-ask="mes"><span>¿Cómo va mi mes?</span><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"></path><path d="M12 18l4-5"></path></svg></i></button><button type="button" class="ai-card" data-ask="gasto"><span>¿En qué gasto más?</span><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"></path></svg></i></button><button type="button" class="ai-card" data-ask="hoy"><span>¿Cuánto puedo gastar hoy?</span><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M5 19l1.4-1.4M17.6 6.4L19 5"></path></svg></i></button><button type="button" class="ai-card" data-ask="meta"><span>¿Cuándo logro mis metas?</span><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 21V4M6.5 4h11l-2 4 2 4H6.5"></path></svg></i></button><button type="button" class="ai-card" data-ask="pagos"><span>¿Qué pagos vienen?</span><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg></i></button><button type="button" class="ai-card" data-ask="saldo"><span>¿Cuánto tengo?</span><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"></rect><path d="M3 10h18M7 15h3"></path></svg></i></button></div>
+        <form class="ai-form" id="ai-form" autocomplete="off"><input type="text" id="ai-q" placeholder="Pregunta sobre tu dinero" aria-label="Pregunta sobre tu dinero" enterkeyhint="send" maxlength="240"><button type="submit" class="ai-send" aria-label="Preguntar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button></form>
+      </div>
+      <div id="ai-store" hidden>
+        <div id="ai-diag">
+          <div class="ai-score" id="ai-score"></div>
+          <div class="ai-stats" id="ai-stats"></div>
+          <p class="hint" id="ai-sub" hidden></p>
+          <div id="ai-groups"></div>
+          <ul class="ai-list" id="ai-list" hidden></ul>
+        </div>
+        <button type="button" class="ai-morebtn" id="ai-cloud-tog" hidden>Plan personalizado con IA</button>
+        <div class="ai-quick" id="ai-quick" hidden></div>
       </div>
     </section>
   </div>
@@ -8795,6 +8868,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       function D() { return state.disp; }
       function m(v, cur) { return mask(money(v, cur || D())); }
       function weekDays() { var d = new Date(), wd = (d.getDay() + 6) % 7, a = addDaysIso(today(), -wd), out = []; for (var i = 0; i < 7; i++) out.push(addDaysIso(a, i)); return out; }
+      window.__dayBudget = function () { return dayBudget(); };
       function dayBudget() {
         var Dd = D(), t = today(), avail = 0, spent = 0, pay = 0, dt = new Date(), dim = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate(), left = dim - dt.getDate() + 1, end = t.slice(0, 7) + "-" + pad2(dim);
         state.accounts.forEach(function (a) { if (a.ahorro) return; var v = conv(accBalance(a), a.moneda, Dd); if (v !== null) avail += v; });
@@ -10492,23 +10566,127 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     }
     $("ai-groups").addEventListener("click", function (e) { if (e.target.closest("#ai-morebtn")) { $("ai-groups").classList.add("ai-all"); e.target.closest("#ai-morebtn").remove(); } });
     $("ai-cloud-tog").addEventListener("click", function () { $("ai-cloud").hidden = false; $("ai-cloud-tog").hidden = true; });
-    $("ai-prev").addEventListener("click", function () { var p = state.month.split("-"), d = new Date(Number(p[0]), Number(p[1]) - 2, 1); setMonth(d.getFullYear() + "-" + pad2(d.getMonth() + 1)); $("ai-out").innerHTML = ""; renderAi(); });
-    $("ai-next").addEventListener("click", function () { var p = state.month.split("-"), d = new Date(Number(p[0]), Number(p[1]), 1); setMonth(d.getFullYear() + "-" + pad2(d.getMonth() + 1)); $("ai-out").innerHTML = ""; renderAi(); });
-    $("ai-quick").addEventListener("click", function (e) {
-      var b = e.target.closest("[data-aiq]");
-      if (!b) return;
-      var q = b.getAttribute("data-aiq");
+    $("ai-prev").addEventListener("click", function () { var p = state.month.split("-"), d = new Date(Number(p[0]), Number(p[1]) - 2, 1); setMonth(d.getFullYear() + "-" + pad2(d.getMonth() + 1)); $("ai-out").innerHTML = ""; aiReset(); renderAi(); });
+    $("ai-next").addEventListener("click", function () { var p = state.month.split("-"), d = new Date(Number(p[0]), Number(p[1]), 1); setMonth(d.getFullYear() + "-" + pad2(d.getMonth() + 1)); $("ai-out").innerHTML = ""; aiReset(); renderAi(); });
+    function aiGo(q) {
       closeAi();
       if (q === "cat") { hist.f = "cat"; hist.c = null; hist.n = 30; showHist(); }
       else if (q === "goal") { showGoals(); openGe(null); }
       else if (q === "pay") { showPay(); openPg(null); }
+      else if (q === "goals") showGoals();
+    }
+    /* Conversación: cada pregunta se responde con los datos del teléfono; las preguntas libres van a la IA si conectaste una */
+    var aiThread = $("ai-thread"), aiPanel = $("ai-panel");
+    var AI_Q = { mes: "¿Cómo va mi mes?", gasto: "¿En qué gasto más?", hoy: "¿Cuánto puedo gastar hoy?", meta: "¿Cuándo logro mis metas?", pagos: "¿Qué pagos vienen?", saldo: "¿Cuánto tengo?" };
+    var AI_ORB = '<span class="ai-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"></circle><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"></path><path d="M20.5 12A8.5 8.5 0 0 1 6 18" opacity=".45"></path><path d="M6 18A8.5 8.5 0 0 1 12 3.5" opacity=".2"></path></svg></span>';
+    function aiReset() {
+      // lo que vive dentro de una respuesta vuelve a su sitio antes de vaciar la conversación
+      $("ai-store").insertBefore($("ai-diag"), $("ai-store").firstChild);
+      $("ai-ask").parentNode.insertBefore($("ai-out"), $("ai-ask").nextSibling);
+      aiThread.innerHTML = ""; aiPanel.classList.remove("chat"); $("ai-cloud").hidden = true; $("ai-q").value = "";
+      var nm = (state.sgName || "").trim().split(/\s+/)[0]; $("ai-hi").textContent = nm ? "Hola, " + nm : "Hola";
+    }
+    function aiBottom() { requestAnimationFrame(function () { aiPanel.scrollTo({ top: aiPanel.scrollHeight, behavior: "smooth" }); }); }
+    function aiSay(text) { var m = document.createElement("div"); m.className = "ai-msg me"; m.innerHTML = '<div class="ai-b"></div>'; m.firstChild.textContent = text; aiThread.appendChild(m); }
+    function aiBot() {
+      var m = document.createElement("div"); m.className = "ai-msg bot";
+      m.innerHTML = '<div class="ai-who">' + AI_ORB + 'Orbe</div><div class="ai-b"><div class="ai-load"><i></i><i></i><i></i></div></div>';
+      aiThread.appendChild(m); return m.lastChild;
+    }
+    function aiActs(list) { return list.length ? '<div class="ai-acts">' + list.map(function (a) { return '<button type="button" data-aiq="' + a[0] + '">' + a[1] + "</button>"; }).join("") + "</div>" : ""; }
+    function aiRow(col, name, sub, val) { return '<div class="ai-row"' + (col ? ' style="--c:' + col + '"' : "") + "><i></i><span>" + esc(name) + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</span><b>" + val + "</b></div>"; }
+    function aiHid(t) { return state.hideSav ? "••••" : t; }
+    // Respuestas con los datos guardados en el teléfono
+    function aiAnswer(k, box) {
+      var D = state.disp, m = state.month, h = "";
+      if (k === "mes") { renderAi(); box.innerHTML = ""; box.appendChild($("ai-diag")); box.insertAdjacentHTML("beforeend", aiActs([["cat", "Ver gastos por categoría"]])); return; }
+      if (k === "gasto") {
+        var by = {}, tot = 0;
+        state.items.forEach(function (it) { if (it.tipo !== "gasto" || it.fecha.slice(0, 7) !== m) return; var v = conv(it.monto, it.moneda, D); if (v === null) return; by[it.cat] = (by[it.cat] || 0) + v; tot += v; });
+        var cats = Object.keys(by).sort(function (a, b) { return by[b] - by[a]; });
+        if (!cats.length) h = "<p>Todavía no registras gastos en " + monthLabel(m).toLowerCase() + ".</p>";
+        else h = '<p class="ai-lead">En ' + monthLabel(m).toLowerCase() + " llevas<b>" + money(tot, D) + '</b>en gastos. Lo que más pesa:</p><div class="ai-rows">' +
+          cats.slice(0, 4).map(function (c) { return aiRow(colorFor(c), c, Math.round(by[c] / tot * 100) + "% de tus gastos", money(by[c], D)); }).join("") + "</div>" + aiActs([["cat", "Ver por categoría"]]);
+      } else if (k === "hoy") {
+        var b = window.__dayBudget ? window.__dayBudget() : null;
+        if (!b) h = "<p>Aún no tengo datos para calcularlo.</p>";
+        else h = '<p class="ai-lead">' + (b.rest < 0 ? "Hoy ya te pasaste por" : "Hoy puedes gastar") + "<b>" + money(Math.abs(b.rest), D) + "</b></p><p>Es lo que hay en tus cuentas" + (b.pay > 0 ? ", menos " + money(b.pay, D) + " de pagos pendientes," : "") + " repartido en los " + b.left + (b.left === 1 ? " día" : " días") + " que quedan del mes. Hoy llevas " + money(b.spent, D) + ".</p>";
+      } else if (k === "meta") {
+        var gm = goalMap(), gs = state.goals || [];
+        if (!gs.length) h = "<p>Aún no tienes metas. Crea una y te digo cuánto te falta y cuándo llegas.</p>" + aiActs([["goal", "Crear una meta"]]);
+        else h = "<p>Así van tus metas:</p>" + '<div class="ai-rows">' + gs.map(function (g) {
+          var bal = gm[g.id] || 0, done = bal >= g.meta - 0.004, pace = done ? null : goalPace(g, goalEvents(g), bal), sub;
+          if (done) sub = "Lograda ✓";
+          else { var ep = pace.kind === "eta" ? pace.eta.split("-") : null; sub = "Faltan " + aiHid(money(Math.max(0, g.meta - bal), g.moneda)) + (ep ? " · a tu ritmo, " + (pace.months < 1 ? "este mes" : MESES_C[Number(ep[1]) - 1] + " " + ep[0]) : pace.kind === "none" ? " · sin aportes aún" : pace.kind === "flat" ? " · sin avance reciente" : ""); }
+          return aiRow(goalColor(g), g.nombre, sub, fmtPct(Math.min(100, g.meta > 0 ? bal / g.meta * 100 : 0)));
+        }).join("") + "</div>" + aiActs([["goals", "Ver mis metas"]]);
+      } else if (k === "pagos") {
+        var ps = (state.payments || []).filter(function (x) { return !x.paid && !x.cobro; }).sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; }), sum = 0, t = today();
+        ps.forEach(function (x) { var v = conv(x.monto, x.moneda, D); if (v !== null) sum += v; });
+        if (!ps.length) h = "<p>No tienes pagos pendientes.</p>" + aiActs([["pay", "Programar un pago"]]);
+        else h = '<p class="ai-lead">Tienes ' + ps.length + (ps.length === 1 ? " pago pendiente" : " pagos pendientes") + " por<b>" + money(sum, D) + '</b></p><div class="ai-rows">' +
+          ps.slice(0, 4).map(function (x) { return aiRow(x.fecha < t ? "var(--out)" : "", x.titulo || "Pago", x.fecha < t ? "Venció el " + shortDate(x.fecha) : x.fecha === t ? "Vence hoy" : "Vence el " + shortDate(x.fecha), money(x.monto, x.moneda)); }).join("") + "</div>" + aiActs([["pay", "Programar un pago"]]);
+      } else if (k === "saldo") {
+        var total = 0, rows = "";
+        state.accounts.forEach(function (a) { var bal = accBalance(a), v = conv(bal, a.moneda, D); if (v !== null) total += v; rows += aiRow(accColor(a), a.nombre, a.ahorro ? "Cuenta de ahorro" : "", a.ahorro ? aiHid(money(bal, a.moneda)) : money(bal, a.moneda)); });
+        h = state.accounts.length ? '<p class="ai-lead">En tus cuentas tienes<b>' + money(total, D) + '</b></p><div class="ai-rows">' + rows + "</div>" : "<p>Aún no tienes cuentas. Agrega una desde el Inicio.</p>";
+      }
+      box.innerHTML = h;
+    }
+    function aiIntent(q) {
+      var t = q.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      if (/puedo gastar|gastar hoy|para hoy|presupuesto diario/.test(t)) return "hoy";
+      if (/pago|vence|debo|deuda|factura/.test(t)) return "pagos";
+      if (/meta|ahorr|lograr|llego/.test(t)) return "meta";
+      if (/en que gasto|gasto mas|categor|donde se va|mas gasto/.test(t)) return "gasto";
+      if (/saldo|cuanto tengo|tengo en|mis cuentas|dinero tengo/.test(t)) return "saldo";
+      if (/como va|como voy|mi mes|resumen|diagnostic|salud/.test(t)) return "mes";
+      return null;
+    }
+    function aiFree(q, box) {
+      var key = aiKey();
+      if (!key) { box.innerHTML = "<p>Eso todavía no sé responderlo con los datos del teléfono. Prueba con una de las sugerencias de abajo, o conecta una IA para hacer preguntas libres.</p>" + '<div class="ai-acts"><button type="button" data-ai-cfg>Conectar una IA</button></div>'; aiBottom(); return; }
+      var ctl = typeof AbortController !== "undefined" ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 45000);
+      var opts = { method: "POST", headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({ model: AI_MODEL, max_tokens: 600, system: AI_SYSTEM + " Ahora responde solo a la pregunta del usuario, en un máximo de 6 líneas, usando los datos.", messages: [{ role: "user", content: aiPrompt(state.month) + "\n\nPregunta: " + q }] }) };
+      if (ctl) opts.signal = ctl.signal;
+      fetch("https://api.anthropic.com/v1/messages", opts)
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }, function () { return { r: r, j: {} }; }); })
+        .then(function (o) {
+          if (!o.r.ok) throw { status: o.r.status };
+          var t = (o.j.content || []).map(function (c) { return c.text || ""; }).join("\n").trim(); if (!t) throw { status: 0 };
+          box.innerHTML = ""; t.split(/\n+/).forEach(function (line) { var x = line.replace(/\*\*/g, "").replace(/^#+\s*/, "").trim(); if (!x) return; var p = document.createElement("p"); p.textContent = x; box.appendChild(p); });
+        })
+        .catch(function (e) { var st = e && e.status; box.innerHTML = ""; var p = document.createElement("p"); p.className = "ai-err"; p.textContent = st === 401 ? "La clave de la IA no es válida. Revísala en el botón de arriba." : st === 429 ? "Se alcanzó el límite de uso de la IA. Intenta en un rato." : "No pude conectarme con la IA. Revisa tu internet o activa el VPN."; box.appendChild(p); })
+        .then(function () { clearTimeout(timer); aiBottom(); });
+    }
+    var aiBusy = false;
+    function aiAskQ(text, k) {
+      text = String(text || "").trim(); if (!text || aiBusy) return;
+      aiBusy = true; aiPanel.classList.add("chat");
+      aiSay(text); var box = aiBot(); aiBottom();
+      setTimeout(function () {
+        aiBusy = false; k = k || aiIntent(text);
+        if (k) aiAnswer(k, box); else { aiFree(text, box); return; }
+        aiBottom();
+      }, 520);
+    }
+    $("ai-sug").addEventListener("click", function (e) { var b = e.target.closest("[data-ask]"); if (b) aiAskQ(AI_Q[b.getAttribute("data-ask")], b.getAttribute("data-ask")); });
+    $("ai-form").addEventListener("submit", function (e) { e.preventDefault(); var v = $("ai-q").value; $("ai-q").value = ""; aiAskQ(v); });
+    aiThread.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-aiq]"); if (b) { aiGo(b.getAttribute("data-aiq")); return; }
+      if (e.target.closest("[data-ai-cfg]")) aiCfg(true);
     });
+    function aiCfg(on) { $("ai-cloud").hidden = !on; if (on) { $("ai-cfg").hidden = !!aiKey(); requestAnimationFrame(function () { $("ai-cloud").scrollIntoView({ block: "center", behavior: "smooth" }); }); } }
+    $("ai-cfg-open").addEventListener("click", function () { aiCfg($("ai-cloud").hidden); });
     function openAi() {
+      aiReset();
       $("ai-out").innerHTML = "";
       $("ai-cfg").hidden = true;
       $("ai-key-err").textContent = "";
       renderAi();
       $("ai-sheet").hidden = false;
+      aiPanel.scrollTop = 0;
     }
     function closeAi() { $("ai-sheet").hidden = true; $("fab").focus(); }
     function showAiText(text) {
