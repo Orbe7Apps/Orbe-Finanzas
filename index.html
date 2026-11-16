@@ -2840,7 +2840,7 @@ main > .panel.fz-today { background: none !important; padding: 0 !important; mar
 .ai-cloud ol, .ai-cloud ul { text-align: left; }
 
 /* Asistente como conversación: saludo con un resplandor, sugerencias en tarjetas y caja para preguntar */
-.ai-chat { display: flex; flex-direction: column; min-height: 82dvh; padding-top: 14px; overflow-x: hidden; }
+.ai-chat { display: flex; flex-direction: column; min-height: 90dvh; padding-top: 14px; overflow-x: hidden; }
 .ai-glow { position: absolute; left: 0; right: 0; top: 0; height: 330px; border-radius: 28px 28px 0 0; pointer-events: none; opacity: .95; overflow: hidden;
   -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); transition: height .5s cubic-bezier(.32,.72,0,1), opacity .5s ease; }
 .ai-glow::before { content: ""; position: absolute; inset: 0; animation: aiGlow 9s ease-in-out infinite alternate;
@@ -2877,7 +2877,7 @@ html.mono .ai-glow::before { background: radial-gradient(110% 85% at 12% 0%, col
 .ai-row b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ai-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .ai-acts button { border: 0; background: var(--surface); color: var(--ink); font: inherit; font-size: .82rem; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; }
-.ai-dock { position: sticky !important; bottom: 0; margin: 0 -20px calc(-20px - env(safe-area-inset-bottom, 0px)); padding: 16px 20px calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 12px; background: linear-gradient(transparent, var(--surface) 26px); z-index: 2; }
+.ai-dock { position: sticky !important; bottom: calc(-20px - env(safe-area-inset-bottom, 0px)); margin: 0 -20px calc(-20px - env(safe-area-inset-bottom, 0px)); padding: 16px 20px max(12px, calc(env(safe-area-inset-bottom, 0px) - 10px)); transform: translateY(calc(var(--kb, 0px) * -1)); display: grid; gap: 12px; background: linear-gradient(transparent, var(--surface) 26px); z-index: 2; }
 .ai-chat.chat #ai-brand { display: none; }
 .ai-sug { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .ai-card { display: grid; align-content: space-between; gap: 14px; min-height: 96px; text-align: left; border: 0; border-radius: 22px; padding: 14px; background: var(--fill, color-mix(in srgb, var(--ink) 6%, transparent)); color: var(--ink); font: inherit; font-size: .93rem; font-weight: 600; line-height: 1.3; cursor: pointer; animation: aiUp .5s cubic-bezier(.32,.72,0,1) backwards; transition: transform .15s ease; -webkit-tap-highlight-color: transparent; }
@@ -2891,8 +2891,11 @@ html.mono .ai-glow::before { background: radial-gradient(110% 85% at 12% 0%, col
 .ai-chat.chat .ai-sug::-webkit-scrollbar { display: none; }
 .ai-chat.chat .ai-card, .ai-chat.chat .ai-card:nth-child(n+5) { display: block; min-height: 0; flex: none; padding: 9px 14px; border-radius: 999px; font-size: .82rem; white-space: nowrap; animation: none; }
 .ai-chat.chat .ai-card i { display: none; }
-.ai-form { display: flex; align-items: center; gap: 8px; background: var(--fill, color-mix(in srgb, var(--ink) 6%, transparent)); border-radius: 999px; padding: 6px 6px 6px 18px; }
-.ai-form input { flex: 1; min-width: 0; border: 0 !important; background: none !important; box-shadow: none !important; outline: 0; font: inherit; font-size: 1rem; color: var(--ink); padding: 8px 0 !important; margin: 0 !important; height: auto !important; }
+.ai-form { display: flex; align-items: center; gap: 8px; background: var(--fill, color-mix(in srgb, var(--ink) 6%, transparent)); border-radius: 999px; padding: 6px 6px 6px 18px; transition: box-shadow .2s ease; }
+.ai-form:focus-within { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+/* La caja de texto no lleva fondo, borde ni brillo propios (los pone la píldora); con id para ganarle al estilo general de las hojas */
+#ai-form #ai-q, #ai-form #ai-q:focus { flex: 1; min-width: 0; width: auto; border: 0 !important; background: none !important; box-shadow: none !important; border-radius: 0 !important; outline: 0; font: inherit; font-size: 1rem; color: var(--ink); padding: 8px 0 !important; margin: 0 !important; min-height: 0 !important; height: auto !important; -webkit-appearance: none; appearance: none; }
+#ai-form #ai-q::placeholder { color: var(--muted); opacity: 1; }
 .ai-send { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink, #fff); display: grid; place-items: center; cursor: pointer; flex: none; transition: transform .15s ease, opacity .2s ease; }
 .ai-send svg { width: 18px; height: 18px; }
 .ai-send:active { transform: scale(.92); }
@@ -10687,7 +10690,17 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     });
     function aiCfg(on) { $("ai-cloud").hidden = !on; if (on) { $("ai-cfg").hidden = !!aiKey(); requestAnimationFrame(function () { $("ai-cloud").scrollIntoView({ block: "center", behavior: "smooth" }); }); } }
     $("ai-cfg-open").addEventListener("click", function () { aiCfg($("ai-cloud").hidden); });
+    if (window.visualViewport) {
+      var aiKb = function () {
+        if ($("ai-sheet").hidden) return;
+        var vv = window.visualViewport, kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        aiPanel.style.setProperty("--kb", (kb > 60 ? kb : 0) + "px");
+      };
+      window.visualViewport.addEventListener("resize", aiKb); window.visualViewport.addEventListener("scroll", aiKb);
+    }
+    $("ai-q").addEventListener("focus", function () { setTimeout(aiBottom, 320); });
     function openAi() {
+      aiPanel.style.setProperty("--kb", "0px");
       aiReset();
       $("ai-out").innerHTML = "";
       $("ai-cfg").hidden = true;
