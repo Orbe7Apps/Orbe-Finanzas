@@ -2901,6 +2901,14 @@ html.mono .ai-glow::before { background: radial-gradient(110% 85% at 12% 0%, col
 .ai-b .ai-item { background: var(--surface) !important; }
 @media (prefers-reduced-motion: reduce) { .ai-glow::before, .ai-hero h2, .ai-msg, .ai-card { animation: none; } .ai-hero, .ai-glow { transition: none; } }
 
+/* Sin líneas finas horizontales en toda la app: los elementos se separan con espacio, no con rayas */
+:is(#hist-list, #ad-list) .hrow { border-top: 0 !important; }
+.hd-rows .hd-r { border-top: 0 !important; }
+.sheet-foot, #gd-foot, #sgd-foot { border-top: 0 !important; }
+.gd-hist li, .sgd-more, .sgd-more .set-row { border-top: 0 !important; }
+.set-group > * { border-top: 0 !important; }
+svg line.grid, svg line.base { display: none; }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
