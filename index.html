@@ -2912,6 +2912,98 @@ html.mono .ai-glow::before { background: radial-gradient(110% 85% at 12% 0%, col
 .set-group > * { border-top: 0 !important; }
 svg line.grid, svg line.base { display: none; }
 
+/* ===== Bienvenida, introducción y registro con el estilo actual ===== */
+/* Resplandor suave arriba, como en el asistente */
+.onb::before, .ctry::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 52vh; pointer-events: none; z-index: 0;
+  background: radial-gradient(110% 80% at 12% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%), radial-gradient(80% 70% at 96% 4%, color-mix(in srgb, var(--in) 18%, transparent), transparent 62%);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent); animation: aiGlow 9s ease-in-out infinite alternate; }
+html.mono .onb::before, html.mono .ctry::before { background: radial-gradient(110% 80% at 12% 0%, color-mix(in srgb, var(--ink) 12%, transparent), transparent 62%); }
+.onb > *, .ctry > * { position: relative; z-index: 1; }
+/* Páginas de introducción: dibujo arriba, título grande y texto alineados a la izquierda */
+.onb-slide { text-align: left !important; align-items: stretch !important; justify-content: center; gap: 10px !important; padding: 8px 6px !important; }
+.onb-slide h2 { font-size: clamp(1.8rem, 8vw, 2.25rem) !important; font-weight: 800; letter-spacing: -0.035em; max-width: 14ch; line-height: 1.08; }
+.onb-slide > p { margin: 0 !important; max-width: 34ch; font-size: 1rem !important; line-height: 1.45; }
+.onb-art2 { height: 250px; margin-bottom: 14px; }
+.onb-slide[aria-hidden="false"] h2, .onb-slide[aria-hidden="false"] > p { animation: aiUp .6s cubic-bezier(.32,.72,0,1) .08s backwards; }
+.onb-slide[aria-hidden="false"] > p { animation-delay: .14s; }
+.onb-tour { align-self: flex-start; }
+.onb-legal { text-align: left; }
+.onb-top { min-height: 40px; }
+.onb-dots { justify-content: flex-start; padding-left: 4px; }
+.onb-btns .primary, .onb-btns .secondary { border-radius: 999px !important; }
+.onb-btns .secondary { width: 52px; padding: 0; font-size: 1.3rem; background: var(--fill); }
+/* El botón recibe el foco al abrir (para lectores de pantalla), pero sin dibujar el aro: solo se ve al usar teclado */
+.onb-btns .primary:focus, .ctry .primary:focus { outline: none !important; box-shadow: none !important; }
+html.kbd .onb-btns .primary:focus, html.kbd .ctry .primary:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent) !important; }
+/* Orbe de la primera página */
+.oa-orb { position: relative; width: 190px; height: 190px; }
+.oa-orb svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.oa-spin { transform-origin: 90px 90px; animation: oaSpin var(--sd, 20s) linear infinite; }
+.oa-spin.r { animation-direction: reverse; }
+@keyframes oaSpin { to { transform: rotate(360deg); } }
+.oa-core { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 37%; aspect-ratio: 1; border-radius: 50%; background: var(--surface); box-shadow: 0 10px 24px color-mix(in srgb, var(--ink) 14%, transparent); display: grid; place-content: center; justify-items: center; text-align: center; }
+.oa-core small { font-size: .5rem; font-weight: 600; color: var(--muted); }
+.oa-core b { font-family: var(--display); font-size: 1rem; letter-spacing: -0.03em; }
+.oa-pills { margin-top: 6px !important; }
+/* Gráfico de saldo */
+.oa-bal { width: min(300px, 100%); padding: 16px 16px 12px; border-radius: 26px; background: var(--surface); box-shadow: 0 14px 34px color-mix(in srgb, var(--ink) 9%, transparent); display: grid; gap: 2px; text-align: left; }
+.oa-bal > small { color: var(--muted); font-size: .76rem; font-weight: 600; }
+.oa-bal > b { font-family: var(--display); font-size: 1.7rem; letter-spacing: -0.035em; line-height: 1.1; }
+.oa-bal svg { width: 100%; height: 92px; display: block; overflow: visible; margin-top: 8px; }
+.oa-ln { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.onb-slide[aria-hidden="false"] .oa-ln { animation: oaLn 1.3s cubic-bezier(.32,.72,0,1) .1s backwards; }
+@keyframes oaLn { from { stroke-dashoffset: 1; } }
+.oa-ax { display: flex; justify-content: space-between; font-size: .66rem; color: var(--muted); margin-top: 6px; }
+.oa-ax b { color: var(--ink); }
+/* Metas en tarjetas con su gráfico */
+.oa-goals { width: min(300px, 100%); display: grid; gap: 9px; text-align: left; }
+.oa-gc { background: var(--surface); border-radius: 22px; padding: 10px 14px 10px 10px; box-shadow: 0 10px 26px color-mix(in srgb, var(--ink) 7%, transparent); }
+.oa-gc:first-child { box-shadow: 0 0 0 2px var(--c), 0 10px 26px color-mix(in srgb, var(--ink) 9%, transparent); }
+.oa-gc svg { display: block; width: 100%; height: 42px; overflow: visible; margin: 12px 0 2px; }
+.oa-gt { display: flex; align-items: center; gap: 10px; }
+.oa-gt i { width: 32px; height: 32px; border-radius: 11px; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--surface)); flex: none; }
+.oa-gt i svg { width: 18px; height: 18px; margin: 0; }
+.oa-gt span { flex: 1; display: grid; min-width: 0; }
+.oa-gt b { font-size: .86rem; } .oa-gt small { font-size: .72rem; color: var(--muted); } .oa-gt em { font-style: normal; font-weight: 700; color: var(--c); }
+.oa-gt strong { font-family: var(--display); font-size: 1rem; letter-spacing: -0.02em; }
+/* Asistente */
+.oa-chat { width: min(290px, 100%); display: grid; gap: 10px; }
+.oa-me { justify-self: end; background: var(--accent); color: var(--accent-ink, #fff); font-weight: 600; font-size: .9rem; padding: 10px 15px; border-radius: 20px 20px 6px 20px; }
+.oa-bot { justify-self: start; display: grid; gap: 2px; background: var(--surface); box-shadow: 0 10px 26px color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 6px 22px 22px 22px; padding: 12px 16px; font-size: .88rem; text-align: left; }
+.oa-bot small { font-weight: 700; font-size: .72rem; color: var(--accent); }
+.oa-bot b { font-family: var(--display); font-size: 1.5rem; letter-spacing: -0.03em; }
+.onb-slide[aria-hidden="false"] .oa-me { animation: aiUp .5s cubic-bezier(.32,.72,0,1) .1s backwards; }
+.onb-slide[aria-hidden="false"] .oa-bot { animation: aiUp .5s cubic-bezier(.32,.72,0,1) .6s backwards; }
+.oa-cat { border-top: 0 !important; }
+html.mono .oa-cats span:first-child { color: var(--bg); }
+html.mono .oa-me { color: var(--bg); }
+/* Elegir país: título grande a la izquierda, lista en tarjeta suave */
+.ctry-head { justify-items: start !important; text-align: left !important; padding: 18px 2px 6px; }
+.ctry-globe { display: none !important; }
+.ctry-head h2 { font-family: var(--display); font-size: clamp(1.9rem, 8.5vw, 2.3rem) !important; font-weight: 800; letter-spacing: -0.035em !important; line-height: 1.08; }
+.ctry-head p { max-width: 34ch !important; font-size: .98rem; }
+.ctry-list { background: var(--surface); border-radius: 24px; padding: 6px !important; }
+.ctry-go { border-radius: 999px !important; min-height: 52px; }
+/* Registro y entrada: cabecera con resplandor, ventajas en fila, campos en píldora */
+#cloud-sheet .sheet { overflow-x: hidden; }
+#cloud-sheet .sheet::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 220px; border-radius: 28px 28px 0 0; pointer-events: none;
+  background: radial-gradient(110% 85% at 12% 0%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%), radial-gradient(85% 75% at 96% 6%, color-mix(in srgb, var(--in) 16%, transparent), transparent 62%);
+  -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); }
+html.mono #cloud-sheet .sheet::before { background: radial-gradient(110% 85% at 12% 0%, color-mix(in srgb, var(--ink) 12%, transparent), transparent 62%); }
+#cloud-sheet .sheet > * { position: relative; }
+#cloud-sheet #h-cloud { font-family: var(--display); font-size: 1.75rem; font-weight: 800; letter-spacing: -0.035em; }
+#cloud-sheet #cl-intro { text-align: left; font-size: .95rem; margin: 0 0 14px; }
+#cloud-sheet .cl-tabs { margin: 6px 0 12px; }
+.cl-perks { background: none !important; padding: 0 !important; gap: 8px !important; margin: 0 0 18px !important; }
+.cl-perks li { gap: 12px !important; font-weight: 600 !important; }
+.cl-perks svg { width: 34px !important; height: 34px !important; padding: 8px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+#cloud-sheet label { text-align: left; margin: 0 0 6px 4px; font-weight: 600; font-size: .8rem; }
+#cloud-sheet .grid { gap: 12px !important; }
+#cloud-sheet .pw-wrap input, #cloud-sheet #cl-email { border-radius: 999px !important; padding-left: 18px !important; min-height: 50px; }
+#cloud-sheet .cl-pwhint { text-align: left; margin-left: 6px; }
+#cloud-sheet .sheet-foot .primary { min-height: 52px; }
+@media (prefers-reduced-motion: reduce) { .onb::before, .ctry::before, .oa-spin { animation: none; } }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -13430,13 +13522,13 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     /* ---------- Tutorial ---------- */
     var SVG = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>"; };
     var ONB = [
-      { art: '<svg class="oa-rings" viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="80" fill="none" stroke="var(--fill)" stroke-width="13"></circle><circle class="oa-arc" cx="90" cy="90" r="80" fill="none" stroke="var(--accent)" stroke-width="13" stroke-linecap="round" stroke-dasharray="392.1 502.7" style="--len:392.1" transform="rotate(-90 90 90)"></circle><circle cx="90" cy="90" r="60" fill="none" stroke="var(--fill)" stroke-width="13"></circle><circle class="oa-arc" cx="90" cy="90" r="60" fill="none" stroke="var(--in)" stroke-width="13" stroke-linecap="round" stroke-dasharray="218.7 377.0" style="--len:218.7;--d:.12s" transform="rotate(-90 90 90)"></circle><circle cx="90" cy="90" r="40" fill="none" stroke="var(--fill)" stroke-width="13"></circle><circle class="oa-arc" cx="90" cy="90" r="40" fill="none" stroke="#f0a020" stroke-width="13" stroke-linecap="round" stroke-dasharray="216.1 251.3" style="--len:216.1;--d:.24s" transform="rotate(-90 90 90)"></circle></svg><div class="oa-pills"><span>Bs</span><span>$</span><span>€</span><span>USDT</span></div>', t: "Tu dinero, claro y en un solo lugar", p: "Gastos, ingresos, ahorro y pagos en bolívares, dólares, euros y USDT." },
+      { art: '<div class="oa-orb"><svg viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="80" fill="none" stroke="var(--fill)" stroke-width="12"></circle><g class="oa-spin" style="--sd:26s"><circle class="oa-arc" cx="90" cy="90" r="80" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="330 502.7" style="--len:330" transform="rotate(-90 90 90)"></circle></g><circle cx="90" cy="90" r="62" fill="none" stroke="var(--fill)" stroke-width="12"></circle><g class="oa-spin r" style="--sd:20s"><circle class="oa-arc" cx="90" cy="90" r="62" fill="none" stroke="var(--in)" stroke-width="12" stroke-linecap="round" stroke-dasharray="190 389.6" style="--len:190;--d:.12s" transform="rotate(-90 90 90)"></circle></g><circle cx="90" cy="90" r="44" fill="none" stroke="var(--fill)" stroke-width="12"></circle><g class="oa-spin" style="--sd:15s"><circle class="oa-arc" cx="90" cy="90" r="44" fill="none" stroke="#f0a020" stroke-width="12" stroke-linecap="round" stroke-dasharray="120 276.5" style="--len:120;--d:.24s" transform="rotate(-90 90 90)"></circle></g></svg><div class="oa-core"><small>En tus cuentas</small><b>$429</b></div></div><div class="oa-pills"><span>Bs</span><span>$</span><span>€</span><span>USDT</span></div>', t: "Tu dinero, claro y en un solo lugar", p: "Gastos, ingresos, ahorro y pagos en bolívares, dólares, euros y USDT." },
       { art: '<div class="oa-form"><small>Monto</small><b>20,50</b><div class="oa-cats"><span style="--c:#5b4cff">'+catSvg("Alimentación")+'Alimentación</span><span style="--c:#f0567e">'+catSvg("Restaurantes")+'Restaurantes</span></div></div>', t: "Anota en segundos", p: "Toca + para anotar un gasto o ingreso. Ahí mismo tienes la calculadora y tus plantillas." },
-      { art: '<div class="oa-acc"><div class="oa-ring"><svg viewBox="0 0 104 104" aria-hidden="true"><circle cx="52" cy="52" r="44" fill="none" stroke="var(--fill)" stroke-width="10"></circle><circle class="oa-arc" cx="52" cy="52" r="44" fill="none" stroke="#00994f" stroke-width="10" stroke-linecap="round" stroke-dasharray="153.6 276.5" stroke-dashoffset="-7.5" style="--len:153.6;--d:0s" transform="rotate(-90 52 52)"></circle><circle class="oa-arc" cx="52" cy="52" r="44" fill="none" stroke="#f0a020" stroke-width="10" stroke-linecap="round" stroke-dasharray="62.4 276.5" stroke-dashoffset="-176.1" style="--len:62.4;--d:0.12s" transform="rotate(-90 52 52)"></circle><circle class="oa-arc" cx="52" cy="52" r="44" fill="none" stroke="#0e9aa7" stroke-width="10" stroke-linecap="round" stroke-dasharray="15.4 276.5" stroke-dashoffset="-253.5" style="--len:15.4;--d:0.24s" transform="rotate(-90 52 52)"></circle></svg><div><small>Total</small><b>$429</b></div></div><div class="oa-rows"><div style="--c:#00994f"><i></i><span>Zinli</span><b>$262</b></div><div style="--c:#f0a020"><i></i><span>Binance</span><b>USDT 120</b></div><div style="--c:#0e9aa7"><i></i><span>Banco</span><b>Bs 41.800</b></div><div class="oa-cat" style="--c:#5b4cff"><i></i><span>Alimentación</span><em class="b">▲ 12%</em></div></div></div>', t: "Mira a dónde va tu dinero", p: "Tus cuentas, tus gastos por categoría y lo que cambió desde el mes pasado. Toca una cuenta para ver sus movimientos." },
-      { art: '<div class="oa-goal"><svg class="oa-rings" viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="80" fill="none" stroke="var(--fill)" stroke-width="14"></circle><circle class="oa-arc" cx="90" cy="90" r="80" fill="none" stroke="#8a3ffc" stroke-width="14" stroke-linecap="round" stroke-dasharray="311.6 502.7" style="--len:311.6" transform="rotate(-90 90 90)"></circle><circle cx="90" cy="90" r="58" fill="none" stroke="var(--fill)" stroke-width="14"></circle><circle class="oa-arc" cx="90" cy="90" r="58" fill="none" stroke="var(--accent)" stroke-width="14" stroke-linecap="round" stroke-dasharray="109.3 364.4" style="--len:109.3;--d:.12s" transform="rotate(-90 90 90)"></circle><circle cx="90" cy="90" r="36" fill="none" stroke="var(--fill)" stroke-width="14"></circle><circle class="oa-arc" cx="90" cy="90" r="36" fill="none" stroke="#0e9aa7" stroke-width="14" stroke-linecap="round" stroke-dasharray="181.0 226.2" style="--len:181.0;--d:.24s" transform="rotate(-90 90 90)"></circle></svg><div class="oa-gl"><div style="--c:#8a3ffc"><i></i>Viaje<b>62%</b></div><div style="--c:var(--accent)"><i></i>Celular<b>30%</b></div><div style="--c:#0e9aa7"><i></i>Emergencia<b>80%</b></div></div></div>', t: "Ahorra y cumple tus metas", p: "Aparta parte de cada ingreso, redondea tus gastos para ahorrar los centavos y crea metas, solo o con tus amigos." },
+      { art: '<div class="oa-bal"><small>Saldo total</small><b>$429,00</b><svg viewBox="0 0 260 90" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="oa-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".22"></stop><stop offset="1" stop-color="var(--accent)" stop-opacity="0"></stop></linearGradient></defs><path d="M0 62 C22 62 30 40 52 40 C74 40 82 52 104 50 C126 48 134 22 156 22 L156 90 L0 90 Z" fill="url(#oa-bg)"></path><path class="oa-ln" pathLength="1" d="M0 62 C22 62 30 40 52 40 C74 40 82 52 104 50 C126 48 134 22 156 22" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"></path><path class="oa-pj" d="M156 22 C190 22 214 44 258 56" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="2 7"></path><circle cx="156" cy="22" r="5.5" fill="var(--accent)"></circle></svg><div class="oa-ax"><span>1 nov</span><b>Hoy</b><span>30 nov</span></div></div>', t: "Mira a dónde va tu dinero", p: "Tu saldo día a día y a dónde llegas a fin de mes si sigues así. Toca una cuenta para ver sus movimientos." },
+      { art: '<div class="oa-goals"><div class="oa-gc" style="--c:#8a3ffc"><div class="oa-gt"><i>'+SVG('<path d="M21 3L3 10.5l7 2.5 2.5 7L21 3z"></path>')+'</i><span><b>Viaje</b><small><em>62%</em> de $600</small></span><strong>$372</strong></div><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 36 C30 36 40 22 70 22 C100 22 110 12 130 12" fill="none" stroke="var(--c)" stroke-width="2.6" stroke-linecap="round"></path><path d="M130 12 L200 3" fill="none" stroke="var(--c)" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 6" opacity=".7"></path><circle cx="130" cy="12" r="4.5" fill="var(--c)"></circle></svg></div><div class="oa-gc" style="--c:#0e9aa7"><div class="oa-gt"><i>'+SVG('<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"></path>')+'</i><span><b>Emergencia</b><small><em>80%</em> de $500</small></span><strong>$400</strong></div></div></div>', t: "Ahorra y cumple tus metas", p: "Aparta parte de cada ingreso, redondea tus gastos para ahorrar los centavos y crea metas, solo o con tus amigos." },
       { art: '<div class="oa-pay"><div class="oa-week"><span class=""><small>L</small>13</span><span class="oa-d"><small>M</small>14</span><span class=""><small>M</small>15</span><span class="oa-d oa-l"><small>J</small>16</span><span class="oa-on"><small>V</small>17</span><span class=""><small>S</small>18</span><span class="oa-d oa-i"><small>D</small>19</span></div><div class="oa-pp late"><i></i><span><b>Internet</b> venció</span><em>$25</em></div><div class="oa-pp"><i></i><span><b>Netflix</b> en 3 días</span><em>$15</em></div><div class="oa-pp in"><i></i><span><b>Cliente</b> por cobrar</span><em>$350</em></div></div>', t: "Que no se te pase ningún pago", p: "Programa pagos y cobros, una vez o cada mes. Orbe te avisa lo que vence." },
-      { art: '<div class="oa-safe"><svg class="oa-rings" viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="70" fill="none" stroke="var(--fill)" stroke-width="12"></circle><circle class="oa-arc" cx="90" cy="90" r="70" fill="none" stroke="var(--in)" stroke-width="12" stroke-linecap="round" stroke-dasharray="439.8 439.8" style="--len:439.8" transform="rotate(-90 90 90)"></circle></svg><svg class="oa-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><div class="oa-dots"><i></i><i></i><i></i><i></i></div></div>', t: cloudOn() ? "Tus datos, seguros" : "Tus datos se quedan aquí", p: cloudOn() ? "Protegidos con tu clave o Face ID. Con tu cuenta gratis se guardan en la nube y los ves en cualquier teléfono." : "Todo se guarda solo en este teléfono, protegido con tu clave. Guarda una copia de vez en cuando.", last: true }
-    ];
+      { art: '<div class="oa-chat"><div class="oa-me">¿Cuánto puedo gastar hoy?</div><div class="oa-bot"><small>Orbe</small>Hoy puedes gastar<b>$18,40</b></div></div>', t: "Pregúntale a Orbe", p: "El asistente responde con tus datos: cómo va tu mes, en qué gastas más y cuándo logras tus metas." },
+      { art: '<div class="oa-safe"><svg class="oa-rings" viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="70" fill="none" stroke="var(--fill)" stroke-width="12"></circle><circle class="oa-arc" cx="90" cy="90" r="70" fill="none" stroke="var(--in)" stroke-width="12" stroke-linecap="round" stroke-dasharray="439.8 439.8" style="--len:439.8" transform="rotate(-90 90 90)"></circle></svg><svg class="oa-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><div class="oa-dots"><i></i><i></i><i></i><i></i></div></div>', t: cloudOn() ? "Tus datos, seguros" : "Tus datos se quedan aquí", p: cloudOn() ? "Protegidos con tu clave o Face ID. Con tu cuenta gratis se guardan en la nube y los ves en cualquier teléfono." : "Todo se guarda solo en este teléfono, protegido con tu clave. Guarda una copia de vez en cuando.", last: true }    ];
     var onb = { i: 0, first: false };
     function locTxt(t) {
       return String(t).replace("<span>Bs</span>", LOC.none ? "" : "<span>" + esc(LOC.sym) + "</span>").replace(/Bs 41\.800/g, (LOC.none ? "€" : LOC.sym) + " 41.800").replace("en bolívares, dólares, euros y USDT", LOC.none ? "en dólares, euros y USDT" : "en " + LOC.name + ", dólares, euros y USDT");
@@ -13461,6 +13553,9 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       $("onb-prev").hidden = onb.i === 0;
       $("onb-skip").hidden = last;
     }
+    // Aro de foco solo cuando se navega con teclado
+    document.addEventListener("keydown", function (e) { if (e.key === "Tab") document.documentElement.classList.add("kbd"); });
+    document.addEventListener("pointerdown", function () { document.documentElement.classList.remove("kbd"); });
     function showOnb(first) {
       onb.first = !!first;
       if (!$("onb-slides").children.length) buildOnb();
