@@ -1840,8 +1840,8 @@ html.mono .rate-card { --rc: var(--ink) !important; }
 #te-sheet select, #te-sheet input[type="text"] { border: 0 !important; }
 #te-sheet .grid { row-gap: 16px; }
 html.mono #tpl-sheet .tpl-ic { background: var(--surface); color: var(--ink); }
-#te-colors { display: flex !important; flex-wrap: wrap; gap: 10px; justify-content: center; }
-#te-colors button { width: 30px; height: 30px; }
+#te-colors { display: flex !important; flex-wrap: nowrap; gap: 6px; justify-content: space-between; }
+#te-colors button { width: 28px; height: 28px; flex: none; }
 .ms-pill { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; border: 0; border-radius: 99px; padding: 8px 12px 8px 12px; font: inherit; font-size: 0.84rem; font-weight: 600; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); cursor: pointer; }
 .ms-pill svg { width: 16px; height: 16px; }
 .ms-pill svg.chev { width: 14px !important; height: 14px !important; opacity: 0.7; flex: none; }
@@ -3036,10 +3036,10 @@ html.mono #cloud-sheet .sheet::before { background: radial-gradient(110% 85% at 
 /* Cerrada de verdad: el buscador y los grupos solo aparecen al desplegar «Otra categoría» */
 .cat-chips.cg[hidden] { display: none !important; }
 /* Las tres frecuentes: píldoras pequeñas en una fila, sin ocupar tanto */
-#sheet .cat-quick { display: flex !important; flex-wrap: nowrap; justify-content: center; gap: 5px !important; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+#sheet .cat-quick { display: flex !important; flex-wrap: nowrap; justify-content: stretch; gap: 5px !important; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
 #sheet .cat-quick::-webkit-scrollbar { display: none; }
-#sheet .cq { flex: 0 0 auto; flex-direction: row !important; min-height: 32px !important; padding: 5px 10px 5px 8px !important; border-radius: 999px !important; font-size: .76rem !important; gap: 5px !important; }
-#sheet .cq span { overflow: visible; text-overflow: clip; }
+#sheet .cq { flex: 1 1 auto; min-width: 0; justify-content: center; flex-direction: row !important; min-height: 32px !important; padding: 5px 10px 5px 8px !important; border-radius: 999px !important; font-size: .76rem !important; gap: 5px !important; }
+#sheet .cq span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #sheet .cq.on, #sheet .cq.on span, #sheet .cq.on svg { color: #fff !important; }
 html.mono #sheet .cq.on, html.mono #sheet .cq.on span, html.mono #sheet .cq.on svg { color: var(--bg) !important; }
 #sheet .cq svg { width: 14px !important; height: 14px !important; }
@@ -5029,9 +5029,8 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           <div class="acc-colors" id="te-colors" role="radiogroup" aria-label="Color de la plantilla"></div>
         </div>
         <div class="wide">
-          <label id="te-rap-l">Montos rápidos (opcional)</label>
+          <label id="te-rap-l">Montos rápidos</label>
           <div class="te-rap" role="group" aria-labelledby="te-rap-l"><input type="text" id="te-r1" inputmode="decimal" autocomplete="off" placeholder="5,00" aria-label="Monto rápido 1"><input type="text" id="te-r2" inputmode="decimal" autocomplete="off" placeholder="10,00" aria-label="Monto rápido 2"><input type="text" id="te-r3" inputmode="decimal" autocomplete="off" placeholder="20,00" aria-label="Monto rápido 3"></div>
-          <p class="hint te-rap-h">Al usar la plantilla aparecen debajo del monto: un toque y listo.</p>
         </div>
         <div class="wide">
           <label for="te-nota">Nota (opcional)</label>
