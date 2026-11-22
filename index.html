@@ -3033,6 +3033,16 @@ html.mono #cloud-sheet .sheet::before { background: radial-gradient(110% 85% at 
 .cg-none { margin: 4px 0; color: var(--muted); font-size: .88rem; text-align: center; }
 #cat-chips.cg { margin-top: 12px !important; overflow: hidden !important; transition: height .42s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .42s cubic-bezier(.32,.72,0,1); }
 #cat-chips.cg.cg-shut { opacity: 0; margin-top: 0 !important; }
+/* Cerrada de verdad: el buscador y los grupos solo aparecen al desplegar «Otra categoría» */
+.cat-chips.cg[hidden] { display: none !important; }
+/* Las tres frecuentes: píldoras pequeñas en una fila, sin ocupar tanto */
+#sheet .cat-quick { display: flex !important; flex-wrap: nowrap; justify-content: center; gap: 5px !important; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+#sheet .cat-quick::-webkit-scrollbar { display: none; }
+#sheet .cq { flex: 0 0 auto; flex-direction: row !important; min-height: 32px !important; padding: 5px 10px 5px 8px !important; border-radius: 999px !important; font-size: .76rem !important; gap: 5px !important; }
+#sheet .cq span { overflow: visible; text-overflow: clip; }
+#sheet .cq.on, #sheet .cq.on span, #sheet .cq.on svg { color: #fff !important; }
+html.mono #sheet .cq.on, html.mono #sheet .cq.on span, html.mono #sheet .cq.on svg { color: var(--bg) !important; }
+#sheet .cq svg { width: 14px !important; height: 14px !important; }
 #cat-chips.cg.cg-in > * { animation: cgIn .45s cubic-bezier(.32,.72,0,1) backwards; }
 #cat-chips.cg.cg-in > :nth-child(2) { animation-delay: .04s; } #cat-chips.cg.cg-in > :nth-child(3) { animation-delay: .08s; } #cat-chips.cg.cg-in > :nth-child(4) { animation-delay: .12s; } #cat-chips.cg.cg-in > :nth-child(n+5) { animation-delay: .16s; }
 @keyframes cgIn { from { opacity: 0; transform: translateY(10px); } }
