@@ -3090,6 +3090,18 @@ html.mono .oa-mini em { color: var(--ink); background: var(--fill); }
 .ao-mid.dot .ao-txt { opacity: 0; transform: scale(.4); transition: opacity .15s ease, transform .2s ease; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .ao-mid .ao-txt, .ao-mid.dot .ao-txt { transition: none; } }
 
+/* Con el teclado abierto el iPhone sube la pantalla y bajo la hoja asomaba lo de atrás (se veía a través del teclado).
+   La hoja se prolonga hacia abajo con su mismo color, así detrás del teclado solo hay hoja. */
+@media (max-width: 639px) {
+.sheet-backdrop > .sheet { box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--glass-hi), 0 30vh 0 0 var(--surface), 0 60vh 0 0 var(--surface), 0 90vh 0 0 var(--surface) !important; }
+html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60vh 0 0 var(--surface), 0 90vh 0 0 var(--surface) !important; }
+}
+/* Saldo total: el equivalente en dólares va debajo, pequeño, no al lado */
+#balance small.usd { display: block; font-size: max(.9rem, .3em); font-weight: 600; letter-spacing: 0; color: var(--muted); margin-top: 6px; line-height: 1.2; }
+.bal-hero.no-trend .balance-head > div:first-child { padding-top: 0 !important; }
+.bal-hero.no-trend .balance-amount { margin-top: 4px !important; }
+.bal-hero.no-trend .bal-delta { margin-top: 14px; }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
