@@ -3107,11 +3107,11 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 .bal-delta:active { transform: scale(.96); }
 .bal-delta .bd-chev { width: 13px; height: 13px; margin-left: 2px; transition: transform .4s cubic-bezier(.32,.72,0,1); }
 .bal-delta[aria-expanded="true"] .bd-chev { transform: rotate(180deg); }
-.bal-hero.no-trend .flows { max-height: 120px; overflow: hidden; transition: max-height .45s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .45s cubic-bezier(.32,.72,0,1); }
-.bal-hero.no-trend.sum-off .flows { max-height: 0; opacity: 0; margin-top: 0; pointer-events: none; }
-.bal-hero.no-trend:not(.sum-off) .flows > * { animation: cgIn .45s cubic-bezier(.32,.72,0,1) backwards; }
-.bal-hero.no-trend:not(.sum-off) .flows > :nth-child(2) { animation-delay: .05s; } .bal-hero.no-trend:not(.sum-off) .flows > :nth-child(3) { animation-delay: .1s; }
-@media (prefers-reduced-motion: reduce) { .bal-hero.no-trend .flows, .bal-delta .bd-chev { transition: none; } .bal-hero.no-trend .flows > * { animation: none !important; } }
+.bal-hero .flows { max-height: 120px; overflow: hidden; transition: max-height .45s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .45s cubic-bezier(.32,.72,0,1); }
+.bal-hero.sum-off .flows { max-height: 0; opacity: 0; margin-top: 0; pointer-events: none; }
+.bal-hero:not(.sum-off) .flows > * { animation: cgIn .45s cubic-bezier(.32,.72,0,1) backwards; }
+.bal-hero:not(.sum-off) .flows > :nth-child(2) { animation-delay: .05s; } .bal-hero:not(.sum-off) .flows > :nth-child(3) { animation-delay: .1s; }
+@media (prefers-reduced-motion: reduce) { .bal-hero .flows, .bal-delta .bd-chev { transition: none; } .bal-hero .flows > * { animation: none !important; } }
 
 #kb-fill { position: fixed; left: 0; right: 0; bottom: 0; height: 0; background: var(--surface); z-index: 2147483000; pointer-events: none; display: none; }
 #kb-fill.on { display: block; }
@@ -6035,7 +6035,8 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var off = state.trendMode === "none", hero = wrap.closest(".bal-hero");
     $("trend").hidden = off; if (hero) hero.classList.toggle("no-trend", off);
     var dl = $("bal-delta");
-    if (off) {
+    // Píldora «este mes» en todos los modos: despliega u oculta ingresos, gastos y ahorrado
+    {
       var D0 = state.disp, mm = state.month, net = 0;
       state.items.forEach(function (it) { if (!it.fecha || it.fecha.slice(0, 7) !== mm || (it.tipo !== "ingreso" && it.tipo !== "gasto")) return; var v = conv(it.monto, it.moneda, D0); if (v !== null) net += it.tipo === "ingreso" ? v : -v; });
       var cur = mm === today().slice(0, 7), qq = mm.split("-");
@@ -6045,9 +6046,8 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       // Resumen del mes (ingresos, gastos, ahorrado): oculto por defecto; la píldora lo despliega
       dl.setAttribute("aria-expanded", String(!!state.sumOpen)); dl.setAttribute("aria-label", (state.sumOpen ? "Ocultar" : "Ver") + " ingresos, gastos y ahorrado del mes");
       if (hero) hero.classList.toggle("sum-off", !state.sumOpen);
-      return;
     }
-    dl.hidden = true; if (hero) hero.classList.remove("sum-off");
+    if (off) return;
     if (state.trendMode === "30d") { drawTrend30(); return; }
     var D = state.disp, m = state.month, q = m.split("-"), nd = new Date(Number(q[0]), Number(q[1]), 0).getDate(), t = today(), curM = t.slice(0, 7);
     var isCur = m === curM, last = isCur ? Number(t.slice(8, 10)) : m < curM ? nd : 0, mN = MESES_C[Number(q[1]) - 1];
