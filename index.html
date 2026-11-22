@@ -3031,7 +3031,15 @@ html.mono #cloud-sheet .sheet::before { background: radial-gradient(110% 85% at 
 .cg-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cg-row[aria-checked="true"], .cg-row[aria-selected="true"] { background: color-mix(in srgb, var(--c) 14%, var(--surface)); box-shadow: inset 0 0 0 2px var(--c); }
 .cg-none { margin: 4px 0; color: var(--muted); font-size: .88rem; text-align: center; }
-#cat-chips.cg { margin-top: 12px !important; animation: aiUp .35s cubic-bezier(.32,.72,0,1) backwards; }
+#cat-chips.cg { margin-top: 12px !important; overflow: hidden !important; transition: height .42s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .42s cubic-bezier(.32,.72,0,1); }
+#cat-chips.cg.cg-shut { opacity: 0; margin-top: 0 !important; }
+#cat-chips.cg.cg-in > * { animation: cgIn .45s cubic-bezier(.32,.72,0,1) backwards; }
+#cat-chips.cg.cg-in > :nth-child(2) { animation-delay: .04s; } #cat-chips.cg.cg-in > :nth-child(3) { animation-delay: .08s; } #cat-chips.cg.cg-in > :nth-child(4) { animation-delay: .12s; } #cat-chips.cg.cg-in > :nth-child(n+5) { animation-delay: .16s; }
+@keyframes cgIn { from { opacity: 0; transform: translateY(10px); } }
+.cg-row { transition: background .2s ease, box-shadow .2s ease, transform .15s ease; }
+.cg-row:active { transform: scale(.97); }
+.cat-btn svg { transition: transform .42s cubic-bezier(.32,.72,0,1) !important; }
+@media (prefers-reduced-motion: reduce) { #cat-chips.cg { transition: none; } #cat-chips.cg.cg-in > * { animation: none; } }
 html.mono .cg-row[aria-checked="true"], html.mono .cg-row[aria-selected="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
 
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
@@ -8354,21 +8362,40 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       $("cat").dispatchEvent(new Event("change", { bubbles: true }));
       renderCatChips();
     });
+    // «Otra categoría» se despliega y se pliega con la altura animada
+    var cgRM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, cgT = 0;
+    function catPanel(open, instant) {
+      var w = $("cat-chips"), btn = $("cat-btn"); clearTimeout(cgT);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (instant || cgRM) { w.hidden = !open; w.style.height = ""; w.classList.remove("cg-shut", "cg-in"); return; }
+      if (open) {
+        w.hidden = false; w.classList.remove("cg-in"); w.classList.add("cg-shut"); w.style.height = "0px";
+        var h = w.scrollHeight; void w.offsetHeight;
+        w.classList.remove("cg-shut"); w.classList.add("cg-in"); w.style.height = h + "px";
+        cgT = setTimeout(function () { w.style.height = ""; }, 440);
+        setTimeout(function () { var sh = w.closest(".sheet"), r = btn.getBoundingClientRect(), sr = sh.getBoundingClientRect(); if (r.top - sr.top > sr.height * 0.35) sh.scrollTo({ top: sh.scrollTop + r.top - sr.top - 80, behavior: "smooth" }); }, 60);
+      } else {
+        if (w.hidden) return;
+        w.style.height = w.scrollHeight + "px"; void w.offsetHeight;
+        w.classList.remove("cg-in"); w.classList.add("cg-shut"); w.style.height = "0px";
+        cgT = setTimeout(function () { w.hidden = true; w.style.height = ""; w.classList.remove("cg-shut"); }, 420);
+      }
+    }
     $("cat-chips").addEventListener("click", function (e) {
       var b = e.target.closest("[data-cat-pick]"); if (!b) return;
       $("cat").value = b.getAttribute("data-cat-pick");
       $("cat").dispatchEvent(new Event("change", { bubbles: true }));
-      renderCatChips();
-      $("cat-chips").hidden = true; $("cat-btn").setAttribute("aria-expanded", "false");
+      [].forEach.call($("cat-chips").querySelectorAll("[data-cat-pick]"), function (x) { x.setAttribute("aria-selected", String(x === b)); });
+      setTimeout(function () { renderCatChips(); catPanel(false); }, 160);   // se ve la marca un instante y se pliega
     });
     $("cat-btn").addEventListener("click", function () {
-      var open = $("cat-chips").hidden;
-      $("cat-chips").hidden = !open; $("cat-btn").setAttribute("aria-expanded", open ? "true" : "false");
+      var open = $("cat-btn").getAttribute("aria-expanded") !== "true";
+      catPanel(open);
       if (open) { var q = $("cat-chips").querySelector(".cg-q"); if (q && q.value) { q.value = ""; q.dispatchEvent(new Event("input", { bubbles: true })); } }
     });
     function syncCuenta() {
       renderCatChips();
-      $("cat-chips").hidden = true; $("cat-btn").setAttribute("aria-expanded", "false");
+      catPanel(false, true);
       var a = accById($("cuenta").value);
       if (a) $("moneda").value = a.moneda;
       $("monto-label").textContent = "Monto (" + curLabel($("moneda").value) + ")";
@@ -8545,8 +8572,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     function renderMq() {
       var box = $("amt-quick"); if (!box) return;
       if (state.editId) { box.hidden = true; return; }
-      var cur = $("moneda").value, vals = mqVals && mqVals.length ? mqVals : quickFreq(state.type, $("cat").value, cur);
-      quickDraw(box, vals, cur, $("monto"));
+      box.hidden = true;   // en «Nuevo movimiento» no van: los montos rápidos son de las plantillas
     }
     $("amt-quick").addEventListener("click", function (e) { quickPick($("amt-quick"), $("monto"), e); });
     $("monto").addEventListener("input", function () { [].forEach.call($("amt-quick").children, function (b) { b.setAttribute("aria-pressed", String(Math.abs((parseNum($("monto").value) || 0) - Number(b.getAttribute("data-q"))) < 0.005)); }); });
