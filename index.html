@@ -3052,6 +3052,9 @@ html.mono #sheet .cq.on, html.mono #sheet .cq.on span, html.mono #sheet .cq.on s
 @media (prefers-reduced-motion: reduce) { #cat-chips.cg { transition: none; } #cat-chips.cg.cg-in > * { animation: none; } }
 html.mono .cg-row[aria-checked="true"], html.mono .cg-row[aria-selected="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
 
+/* Blanco y negro: los selectores de color no tienen sentido, se ocultan con su título */
+html.mono .acc-colors, html.mono .acc-pl:has(+ .acc-colors), html.mono #te-sheet .wide:has(> #te-colors) { display: none !important; }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -6222,9 +6225,9 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   var goalsOpen = {};
   var gcRange = 0;
   function goalColor(g) {
-    if (g && g.color && HEX_RE.test(g.color)) return g.color;
+    if (g && g.color && HEX_RE.test(g.color)) return tone(g.color);
     var i = state.goals.indexOf(g);
-    return GOAL_COLORS[(i < 0 ? 0 : i) % GOAL_COLORS.length];
+    return tone(GOAL_COLORS[(i < 0 ? 0 : i) % GOAL_COLORS.length]);
   }
   // Símbolos para las metas (de línea, toman el color de la meta)
   var GOAL_SVG = {
@@ -6993,11 +6996,51 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     "Ajustes de saldo": '<path d="M12 4v16M5 20h14M5 8h14"></path><path d="M5 8l-3 6a3 3 0 0 0 6 0zM19 8l-3 6a3 3 0 0 0 6 0z"></path>',
     "Otros ingresos": '<circle cx="6" cy="12" r="1.3"></circle><circle cx="12" cy="12" r="1.3"></circle><circle cx="18" cy="12" r="1.3"></circle>'
   };
-  function colorFor(cat) { return CAT_COL[cat] || CAT_COL["Otros"]; }
+  // Con un color de app distinto a Orbe (azul, verde, rosa, naranja), todo lo que tiene color propio
+  // (categorías, cuentas, metas, plantillas) se muestra en tonos de ese color. En Orbe se ve el arcoíris de siempre.
+  // Los colores guardados no cambian: al volver a Orbe reaparecen tal cual.
+  var TONE_ORDER = ["#5b4cff", "#0e9aa7", "#00994f", "#e08a00", "#f0567e", "#e5133f", "#8a3ffc", "#d65fb0", "#4f86f7", "#d6502b", "#00a651"];
+  var TONE_STEP = [[0, 0], [-18, 12], [18, -10], [-8, -18], [10, 20], [-28, 2], [26, 6], [6, -26], [-14, 28], [30, -16], [-4, 10]];
+  var toneCache = null, toneKey = "";
+  function toneReset() { toneCache = null; toneKey = ""; }
+  function hex2hsl(h) {
+    h = String(h).replace("#", ""); if (h.length === 3) h = h.replace(/./g, "$&$&");
+    var r = parseInt(h.substr(0, 2), 16) / 255, g = parseInt(h.substr(2, 2), 16) / 255, b = parseInt(h.substr(4, 2), 16) / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, hh = 0, ss = 0;
+    if (d) { ss = d / (1 - Math.abs(2 * l - 1)); hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hh *= 60; if (hh < 0) hh += 360; }
+    return [hh, ss * 100, l * 100];
+  }
+  function hsl2hex(h, sat, l) {
+    sat /= 100; l /= 100; var c = (1 - Math.abs(2 * l - 1)) * sat, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2, rgb;
+    h = ((h % 360) + 360) % 360;
+    rgb = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return "#" + rgb.map(function (v) { var n = Math.round((v + m) * 255); return (n < 16 ? "0" : "") + n.toString(16); }).join("");
+  }
+  function toneTable() {
+    var r = document.documentElement;
+    if (!r.getAttribute("data-accent") || r.classList.contains("mono")) return null;
+    if (toneCache) return toneCache;
+    var acc = getComputedStyle(r).getPropertyValue("--accent").trim();
+    if (!/^#[0-9a-f]{3,8}$/i.test(acc)) return null;
+    var hsl = hex2hsl(acc), dark = hsl[2] > 58;
+    toneCache = TONE_STEP.map(function (st) {
+      var l = Math.max(dark ? 42 : 26, Math.min(dark ? 82 : 68, hsl[2] + st[1] * (dark ? 0.8 : 1)));
+      return hsl2hex(hsl[0] + st[0], Math.max(38, Math.min(92, hsl[1] - Math.abs(st[1]) * 0.25)), l);
+    });
+    return toneCache;
+  }
+  // idx: posición fija (por ejemplo, la de la categoría en su lista); sin ella, se usa la del color en TONE_ORDER
+  function tone(hex, idx) {
+    var t = toneTable(); if (!t) return hex;
+    if (idx == null || idx < 0) { idx = TONE_ORDER.indexOf(String(hex).toLowerCase()); if (idx < 0) { idx = 0; String(hex).split("").forEach(function (ch) { idx = (idx * 31 + ch.charCodeAt(0)) | 0; }); idx = Math.abs(idx); } }
+    return t[idx % t.length];
+  }
+  window.__tone = tone;
+  function colorFor(cat) { return tone(CAT_COL[cat] || CAT_COL["Otros"], CATS.gasto.indexOf(cat)); }
   function catSvg(c) { return '<svg class="ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (CAT_ICON[c] || CAT_ICON["Otros"]) + "</svg>"; }
 
   function colorForIn(cat) {
-    return CAT_COL_IN[cat] || CAT_COL_IN["Otros ingresos"];
+    return tone(CAT_COL_IN[cat] || CAT_COL_IN["Otros ingresos"], CATS.ingreso.indexOf(cat) + 3);
   }
 
   function drawDonut(o) {
@@ -7321,7 +7364,9 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var hc = $("h-cat"), ht = tab === "ingreso" ? "Tus ingresos" : "Tus gastos";
     if (hc && hc.textContent !== ht) hc.textContent = ht;
     var html = '<div class="cv-top"><div class="seg cv-tabs" role="group" aria-label="Ver gastos o ingresos"><button type="button" data-cv-tab="gasto" aria-pressed="' + (tab === "gasto") + '">Gastos</button><button type="button" data-cv-tab="ingreso" aria-pressed="' + (tab === "ingreso") + '">Ingresos</button></div>' + (cvData(state.month, tab).tot > 0.004 ? '<b class="cv-total fit">' + money(cvData(state.month, tab).tot, state.disp) + "</b>" : "") + "</div>" + cvSection(tab);
-    if (w._h !== html) { var tabCh = CVF.lastTab !== tab; CVF.lastTab = tab; w.innerHTML = html; w._h = html; void tabCh; cvDraw(true); }
+    var tk = (toneTable() || []).join() + (document.documentElement.classList.contains("mono") ? "m" : "");   // al cambiar el color de la app, las burbujas se repintan
+    if (w._h !== html) { var tabCh = CVF.lastTab !== tab; CVF.lastTab = tab; w.innerHTML = html; w._h = html; w._tk = tk; void tabCh; cvDraw(true); }
+    else if (w._tk !== tk) { w._tk = tk; cvDraw(false); }
   }
   function render() {
     limMigrate();
@@ -7700,7 +7745,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   var ACC_ICONS = ["", "bank", "card", "cash", "wallet", "coin", "phone", "home", "cart", "plane", "bag", "star"];
   var ACC_COLORS = ["#5b4cff", "#00994f", "#e08a00", "#8a3ffc", "#e5133f", "#0e9aa7", "#d6502b"];
   function accSvg(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ACC_SVG[k] + "</svg>"; }
-  function accColor(a) { return (a.color && HEX_RE.test(a.color)) ? a.color : (ACC_CUR[a.moneda] || ACC_CUR.USD).c; }
+  function accColor(a) { return tone((a.color && HEX_RE.test(a.color)) ? a.color : (ACC_CUR[a.moneda] || ACC_CUR.USD).c); }
   function accAvatar(a, big) {
     var c = accColor(a), ic = a.icon && ACC_SVG[a.icon] ? a.icon : "";
     return '<span class="acc-av' + (big ? " big" : "") + (ic ? " sym" : "") + '" style="--c:' + c + '" aria-hidden="true">' + (ic ? accSvg(ic) : esc(accInitials(a.nombre))) + "</span>";
@@ -8442,7 +8487,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         return '<button type="button" role="radio" data-acc-ic="' + ic + '" aria-checked="' + (ic === accLook.icon ? "true" : "false") + '" aria-label="' + (ic ? "Símbolo " + ic : "Iniciales") + '">' + (ic ? accSvg(ic) : '<span class="ini">Aa</span>') + "</button>";
       }).join("");
       $("acc-colors").innerHTML = ACC_COLORS.map(function (c) {
-        return '<button type="button" role="radio" data-acc-col="' + c + '" aria-checked="' + (c === col ? "true" : "false") + '" aria-label="Color" style="--c:' + c + '"></button>';
+        return '<button type="button" role="radio" data-acc-col="' + c + '" aria-checked="' + (c === col ? "true" : "false") + '" aria-label="Color" style="--c:' + tone(c) + '"></button>';
       }).join("");
     }
     $("acc-icons").addEventListener("click", function (e) { var b = e.target.closest("[data-acc-ic]"); if (b) { accLook.icon = b.getAttribute("data-acc-ic"); renderAccLook(); } });
@@ -9973,7 +10018,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     /* ---------- Plantillas ---------- */
     var teId = null, teType = "gasto", tuId = null, tuType = "gasto", tplTab = "gasto", teColor = null;
     var TPL_COLORS = ["#5b4cff", "#0e9aa7", "#00994f", "#e08a00", "#f0567e", "#e5133f", "#8a3ffc", "#d65fb0", "#4f86f7"];
-    function tplColor(t) { return (t.color && HEX_RE.test(t.color)) ? t.color : (t.tipo === "ingreso" ? colorForIn(t.cat) : colorFor(t.cat)); }
+    function tplColor(t) { return (t.color && HEX_RE.test(t.color)) ? tone(t.color) : (t.tipo === "ingreso" ? colorForIn(t.cat) : colorFor(t.cat)); }
     function drawTeCats() {
       var cur = $("te-cat").value, inc = teType === "ingreso";
       var box = $("te-cats"), q = box.querySelector(".cg-q"), qv = q ? q.value : "";
@@ -9983,9 +10028,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       if (qv) { var nq = box.querySelector(".cg-q"); if (nq) { nq.value = qv; nq.dispatchEvent(new Event("input", { bubbles: true })); } }
     }
     function drawTeColors() {
-      var sel = teColor || ($("te-cat").value ? (teType === "ingreso" ? colorForIn($("te-cat").value) : colorFor($("te-cat").value)) : TPL_COLORS[0]);
+      // Sin color propio, la plantilla usa el de su categoría: se compara con el color original y se muestra como se verá
+      var tc = $("te-cat").value, catRaw = tc ? (teType === "ingreso" ? CAT_COL_IN[tc] : CAT_COL[tc]) || "" : "", catShown = tc ? (teType === "ingreso" ? colorForIn(tc) : colorFor(tc)) : "";
+      var sel = teColor || catRaw || TPL_COLORS[0];
       var list = TPL_COLORS.indexOf(sel) < 0 ? [sel].concat(TPL_COLORS) : TPL_COLORS;
-      $("te-colors").innerHTML = list.map(function (c) { return '<button type="button" role="radio" data-te-col="' + c + '" aria-checked="' + (c === sel) + '" aria-label="Color" style="--c:' + c + '"></button>'; }).join("");
+      $("te-colors").innerHTML = list.map(function (c) { return '<button type="button" role="radio" data-te-col="' + c + '" aria-checked="' + (c === sel) + '" aria-label="Color" style="--c:' + (c === catRaw && !teColor ? catShown : tone(c)) + '"></button>'; }).join("");
     }
     function tplById(id) { return state.templates.filter(function (t) { return String(t.id) === String(id); })[0] || null; }
     function tplMeta(t) {
@@ -11139,14 +11186,15 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     function renderGeLook() {
       var g0 = geId ? goalById(geId) : null;
       var fake = { nombre: $("ge-nombre").value || "Meta", icon: geLook.icon, color: geLook.color };
-      var col = geLook.color || (g0 ? goalColor(g0) : GOAL_COLORS[state.goals.length % GOAL_COLORS.length]);
+      // color guardado (sin teñir): el selector compara con su paleta original
+      var col = geLook.color || (g0 ? (g0.color && HEX_RE.test(g0.color) ? g0.color : GOAL_COLORS[Math.max(0, state.goals.indexOf(g0)) % GOAL_COLORS.length]) : GOAL_COLORS[state.goals.length % GOAL_COLORS.length]);
       fake.color = col;
       $("ge-prev").innerHTML = goalAvatar(fake, "big");
       $("ge-icons").innerHTML = GOAL_ICONS.map(function (ic) {
         return '<button type="button" role="radio" data-ge-ic="' + ic + '" aria-checked="' + (ic === geLook.icon ? "true" : "false") + '" aria-label="' + GOAL_ICON_N[ic] + '">' + (ic ? goalSvg(ic) : '<span class="ini">Aa</span>') + "</button>";
       }).join("");
       $("ge-colors").innerHTML = GOAL_COLORS.concat(["#d6502b"]).map(function (c) {
-        return '<button type="button" role="radio" data-ge-col="' + c + '" aria-checked="' + (c === col ? "true" : "false") + '" aria-label="Color" style="--c:' + c + '"></button>';
+        return '<button type="button" role="radio" data-ge-col="' + c + '" aria-checked="' + (c === col ? "true" : "false") + '" aria-label="Color" style="--c:' + tone(c) + '"></button>';
       }).join("");
     }
     $("ge-icons").addEventListener("click", function (e) { var b = e.target.closest("[data-ge-ic]"); if (b) { geLook.icon = b.getAttribute("data-ge-ic"); renderGeLook(); } });
@@ -12293,12 +12341,14 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     $("cf-ok").addEventListener("click", function () { var a = cfAction; cfCancel = null; closeCf(); if (a) a(); });
 
     function applyTheme() {
-      var r = document.documentElement;
+      var r = document.documentElement; toneReset();
       r.classList.toggle("mono", !!state.mono);
       if (state.accent && state.accent !== "orbe") r.setAttribute("data-accent", state.accent); else r.removeAttribute("data-accent");
       if (state.theme === "light" || state.theme === "dark") r.setAttribute("data-theme", state.theme);
       else r.removeAttribute("data-theme");
     }
+    // Si el teléfono cambia entre claro y oscuro, los tonos se recalculan
+    try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { toneReset(); if (state.accent && state.accent !== "orbe" && !state.mono) render(); }); } catch (e) {}
     var ACCENT_NAME = { orbe: "Orbe", azul: "Azul", verde: "Verde", rosa: "Rosa", naranja: "Naranja", bn: "Blanco y negro" };
     document.querySelectorAll("[data-accent-set]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -12318,7 +12368,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     document.querySelectorAll("[data-theme-set]").forEach(function (b) {
       b.addEventListener("click", function () {
         state.theme = b.getAttribute("data-theme-set");
-        applyTheme(); save(); renderSettings();
+        applyTheme(); save(); renderSettings(); render();
         try { drawTrend(); } catch (e) {}
       });
     });
@@ -12904,10 +12954,10 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     // La divisa de la meta se guarda con su código real (USD, EUR, COP…); aquí se traduce a la de la app
     function sgCur(c) { if (c === "USD" || c === "EUR" || c === "USDT") return c; if (c === LOC.code && !LOC.none) return "VES"; return null; }
     function sgMoney(n, c) { var k = sgCur(c); return k ? money(n, k) : num(n) + " " + c; }
-    function sgPal(id) { var h = 0; String(id).split("").forEach(function (ch) { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return SG_PAL[Math.abs(h) % SG_PAL.length]; }
+    function sgPal(id) { var h = 0; String(id).split("").forEach(function (ch) { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return tone(SG_PAL[Math.abs(h) % SG_PAL.length], Math.abs(h)); }
     function sgAv(m, cls) { return '<span class="sg-av' + (cls ? " " + cls : "") + '" style="--c:' + sgPal(m.user_id) + '" aria-hidden="true">' + esc(sgIni(m.name)) + "</span>"; }
     function sgIni(n) { var w = String(n || "?").trim().split(/\s+/); return (w[0].charAt(0) + (w[1] ? w[1].charAt(0) : "")).toUpperCase(); }
-    function sgLook(g) { return { nombre: g.name, icon: g.icon, color: g.color }; }
+    function sgLook(g) { return { nombre: g.name, icon: g.icon, color: g.color }; }   // goalAvatar → goalColor ya aplica el tono
     function sgFmtCode(c) { return "ORBE-" + c; }
     function sgClean(c) { c = String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); if (c.length > 6 && c.indexOf("ORBE") === 0) c = c.slice(4); return c; }
     function sgLink(c) { return location.origin + location.pathname + "?meta=" + sgFmtCode(c); }
@@ -13052,13 +13102,13 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       var sm = function (v) { var k = sgCur(g.cur); return k && Math.abs(v - Math.round(v)) < 0.005 ? money(v, k, 0) : sgMoney(v, g.cur); };
       var chart = window.__goPlot ? window.__goPlot(evs, c.ok, g.target, c.done ? { kind: "done" } : goalPace({ meta: g.target }, evs, c.ok)) : "";
       var foot = c.lead && pendN && !c.done ? '<span class="sg-tag lead">' + pendN + " por confirmar</span>" : c.lead ? '<span class="sg-tag lead">' + sgSvg("crown") + "Líder</span>" : "";
-      return '<li><button type="button" class="sg-card' + (c.done ? " done" : "") + '" data-sg="' + esc(g.id) + '" style="--gc:' + esc(g.color) + '">' +
+      return '<li><button type="button" class="sg-card' + (c.done ? " done" : "") + '" data-sg="' + esc(g.id) + '" style="--gc:' + esc(tone(g.color)) + '">' +
         '<span class="go-t"><i class="go-ic">' + (g.icon && GOAL_SVG[g.icon] ? goalSvg(g.icon) : esc(accInitials(g.name))) + '</i><span class="go-tx"><span class="go-n">' + esc(g.name) + '</span><span class="go-p"><b>' + (c.done ? "Lograda ✓" : fmtPct(c.pct)) + "</b>" + (c.done ? "" : " de " + sm(g.target)) + '</span></span><span class="go-a">' + sm(c.ok) + "</span></span>" + chart +
         '<span class="sg-foot"><span class="sg-stack">' + mem.slice(0, 5).map(function (m) { return sgAv(m, "sm"); }).join("") + (mem.length > 5 ? '<span class="sg-av sm more">+' + (mem.length - 5) + "</span>" : "") + "</span>" + foot + "</span></button></li>";
     }
     function sgInvCard() {
       var v = SG.inv; if (!v) return "";
-      return '<div class="sg-inv" style="--gc:' + esc(v.color) + '">' + goalAvatar(sgLook(v)) + '<div class="sg-inv-t"><small>' + esc(v.leader || "Un amigo") + " te invitó a</small><b>" + esc(v.name) + "</b><span>" + sgMoney(v.target, v.cur) + " · " + v.n + (v.n === 1 ? " persona" : " personas") + "</span></div>" +
+      return '<div class="sg-inv" style="--gc:' + esc(tone(v.color)) + '">' + goalAvatar(sgLook(v)) + '<div class="sg-inv-t"><small>' + esc(v.leader || "Un amigo") + " te invitó a</small><b>" + esc(v.name) + "</b><span>" + sgMoney(v.target, v.cur) + " · " + v.n + (v.n === 1 ? " persona" : " personas") + "</span></div>" +
         '<div class="sg-inv-b"><button type="button" class="secondary" data-sg-inv="no">Ahora no</button><button type="button" class="primary" data-sg-inv="yes">Unirme</button></div></div>';
     }
     function sgRender() {
@@ -13105,7 +13155,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       mem.sort(function (a, b) { return (a.user_id === g.leader ? -1 : 0) - (b.user_id === g.leader ? -1 : 0) || (a.user_id === me ? -1 : 0) - (b.user_id === me ? -1 : 0); });
       $("h-sgd").textContent = g.name;
       var lead = (mem.filter(function (m) { return m.user_id === g.leader; })[0] || {}).name || "—";
-      var html = '<div class="sgd-hero" style="--gc:' + esc(g.color) + '"><div class="sgd-ring">' + sgRing(c, g.color) + '<span>' + goalAvatar(sgLook(g)) + "</span></div>" +
+      var html = '<div class="sgd-hero" style="--gc:' + esc(tone(g.color)) + '"><div class="sgd-ring">' + sgRing(c, tone(g.color)) + '<span>' + goalAvatar(sgLook(g)) + "</span></div>" +
         '<div class="sgd-hv"><b class="fit">' + sgMoney(c.ok, g.cur) + "</b><small>de " + sgMoney(g.target, g.cur) + " · " + fmtPct(c.pct) + "</small>" +
         (c.pend > 0.004 ? '<span class="sgd-pend">+' + sgMoney(c.pend, g.cur) + " por confirmar</span>" : "") + "</div></div>";
       var meta = [];
@@ -13272,7 +13322,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         return '<button type="button" role="radio" data-sg-ic="' + ic + '" aria-checked="' + (ic === sgNew.icon ? "true" : "false") + '" aria-label="' + GOAL_ICON_N[ic] + '">' + (ic ? goalSvg(ic) : '<span class="ini">Aa</span>') + "</button>";
       }).join("");
       $("sgn-colors").innerHTML = GOAL_COLORS.concat(["#d6502b"]).map(function (c) {
-        return '<button type="button" role="radio" data-sg-col="' + c + '" aria-checked="' + (c === col ? "true" : "false") + '" aria-label="Color" style="--c:' + c + '"></button>';
+        return '<button type="button" role="radio" data-sg-col="' + c + '" aria-checked="' + (c === col ? "true" : "false") + '" aria-label="Color" style="--c:' + tone(c) + '"></button>';
       }).join("");
     }
     function sgOpenNew() {
@@ -13395,7 +13445,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       sgApi.preview(code).then(function (v) {
         if (!v) { sgJoin = null; $("sgj-prev").innerHTML = ""; err.textContent = "No encontramos una meta con ese código."; return; }
         err.textContent = ""; sgJoin = { code: code, v: v };
-        $("sgj-prev").innerHTML = '<div class="sg-inv solo" style="--gc:' + esc(v.color) + '">' + goalAvatar(sgLook(v)) + '<div class="sg-inv-t"><small>Líder: ' + esc(v.leader || "—") + "</small><b>" + esc(v.name) + "</b><span>" + sgMoney(Number(v.target), v.cur) + " · " + v.n + (v.n === 1 ? " persona" : " personas") + "</span></div></div>";
+        $("sgj-prev").innerHTML = '<div class="sg-inv solo" style="--gc:' + esc(tone(v.color)) + '">' + goalAvatar(sgLook(v)) + '<div class="sg-inv-t"><small>Líder: ' + esc(v.leader || "—") + "</small><b>" + esc(v.name) + "</b><span>" + sgMoney(Number(v.target), v.cur) + " · " + v.n + (v.n === 1 ? " persona" : " personas") + "</span></div></div>";
         $("sgj-go").textContent = v.mine ? "Ver la meta" : v.status === "done" ? "Esta meta ya se logró" : "Unirme";
         $("sgj-go").disabled = !v.mine && v.status === "done";
       }, function (e) { err.textContent = cloudErr(e); });
