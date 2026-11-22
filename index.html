@@ -3055,6 +3055,19 @@ html.mono .cg-row[aria-checked="true"], html.mono .cg-row[aria-selected="true"] 
 /* Blanco y negro: los selectores de color no tienen sentido, se ocultan con su título */
 html.mono .acc-colors, html.mono .acc-pl:has(+ .acc-colors), html.mono #te-sheet .wide:has(> #te-colors) { display: none !important; }
 
+/* Inicio «Sin gráfico»: el total grande y centrado, con lo que cambió en el mes */
+.bal-hero.no-trend .balance-head > div:first-child { display: grid; justify-items: center; text-align: center; padding: 22px 0 6px; }
+.bal-hero.no-trend .bal-lrow { justify-content: center; }
+.bal-hero.no-trend .balance-amount { font-size: clamp(2.8rem, 13vw, 3.6rem) !important; margin-top: 8px; }
+.bal-hero.no-trend .flows { margin-top: 18px; }
+.bal-delta { display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; padding: 6px 12px; border-radius: 999px; font-size: .8rem; font-weight: 700; font-variant-numeric: tabular-nums; animation: aiUp .45s cubic-bezier(.32,.72,0,1) backwards; }
+.bal-delta[hidden] { display: none; }
+.bal-delta.up { color: var(--in); background: color-mix(in srgb, var(--in) 13%, transparent); }
+.bal-delta.down { color: var(--out); background: color-mix(in srgb, var(--out) 13%, transparent); }
+.bal-delta.flat { color: var(--muted); background: var(--fill); }
+html.mono .bal-delta { color: var(--ink) !important; background: var(--fill) !important; }
+#trend[hidden] { display: none !important; }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -3876,6 +3889,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         <div class="disp-pop" id="disp-pop" role="menu" aria-label="Ver en otra moneda" hidden></div>
         <div class="balance-amount fit" id="balance">$0,00</div>
         <div class="bal-note" id="bal-note" hidden></div>
+        <div class="bal-delta" id="bal-delta" hidden></div>
       </div>
       <div class="seg" role="group" aria-label="Moneda para mostrar">
         <button type="button" data-disp="USD" aria-pressed="true">USD</button>
@@ -4123,10 +4137,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         </div>
       </div>
       <div class="set-row set-stack" id="trend-row">
-        <div class="tx"><b>Gráfico del Inicio</b><small>Hasta fin de mes, o tu saldo de los últimos 30 días.</small></div>
+        <div class="tx"><b>Gráfico del Inicio</b><small>Hasta fin de mes, tu saldo de los últimos 30 días, o solo el total.</small></div>
         <div class="seg" role="group" aria-label="Gráfico del Inicio">
           <button type="button" data-trend-set="mes" aria-pressed="true">Este mes</button>
-          <button type="button" data-trend-set="30d" aria-pressed="false">Últimos 30 días</button>
+          <button type="button" data-trend-set="30d" aria-pressed="false">30 días</button>
+          <button type="button" data-trend-set="none" aria-pressed="false">Sin gráfico</button>
         </div>
       </div>
     </div>
@@ -5374,7 +5389,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         else if (d && d.onb) { var bnUsed = (d.earn && d.earn.length) || (d.bn && ((d.bn.done && Object.keys(d.bn.done).length) || (d.bn.opened && Object.keys(d.bn.opened).length))); var sgUsed = false; try { sgUsed = !!localStorage.getItem("orbe-sesion"); } catch (e) {} state.fx = { bn: !!bnUsed, sg: sgUsed }; }
         if (d && typeof d.cqOff === "boolean") state.cqOff = d.cqOff;
         if (d && typeof d.pullOff === "boolean") state.pullOff = d.pullOff;
-        if (d && d.trendMode === "30d") state.trendMode = "30d";
+        if (d && (d.trendMode === "30d" || d.trendMode === "none")) state.trendMode = d.trendMode;
         if (d && d.wCalc && /^(USD|EUR|USDT|VES)$/.test(d.wCalc.a) && /^(USD|EUR|USDT|VES)$/.test(d.wCalc.b)) state.wCalc = { a: d.wCalc.a, b: d.wCalc.b };
         if (d && Array.isArray(d.widgets)) state.widgets = d.widgets.filter(function (w) { return w && typeof w.k === "string" && /^[abc]$/.test(w.z); }).slice(0, 4);
         if (d && typeof d.sgName === "string") state.sgName = d.sgName.slice(0, 30);
@@ -5409,7 +5424,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   }
   function save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify({ items: state.items, rate: state.rate, rateDate: state.rateDate, hideSav: state.hideSav, rateManual: state.rateManual, rateAutoAt: state.rateAutoAt, accounts: state.accounts, templates: state.templates, goals: state.goals, payments: state.payments, paySeries: state.paySeries, earn: state.earn, limits: state.limits, rateHist: state.rateHist, rateHistAt: state.rateHistAt, theme: state.theme, mono: !!state.mono, accent: state.accent || "orbe", pin: state.pin, backupAt: state.backupAt, onb: state.onb, msumSeen: state.msumSeen, country: state.country, ratesOn: !!state.ratesOn, aiHide: !!state.aiHide, fx: state.fx || { bn: false, sg: false }, cqOff: !!state.cqOff, pullOff: !!state.pullOff, trendMode: state.trendMode === "30d" ? "30d" : "mes", widgets: state.widgets || [], wCalc: state.wCalc || null, sgName: state.sgName || "", instSeen: state.instSeen, notif: state.notif, subs: state.subs, limCur: state.limCur, savTipOff: !!state.savTipOff, limPer: state.limPer, lastAcc: state.lastAcc, bn: state.bn, btcUsd: state.btcUsd, btcAt: state.btcAt, rateEur: state.rateEur, rateEurDate: state.rateEurDate, rateEurManual: state.rateEurManual, rateUsdt: state.rateUsdt, rateUsdtDate: state.rateUsdtDate, rateUsdtManual: state.rateUsdtManual, rateUsdtSrc: state.rateUsdtSrc, collapsed: state.collapsed, disp: state.disp, sav: state.sav, forz: state.forz, dayOn: !!state.dayOn, roundOn: !!state.roundOn }));
+      localStorage.setItem(KEY, JSON.stringify({ items: state.items, rate: state.rate, rateDate: state.rateDate, hideSav: state.hideSav, rateManual: state.rateManual, rateAutoAt: state.rateAutoAt, accounts: state.accounts, templates: state.templates, goals: state.goals, payments: state.payments, paySeries: state.paySeries, earn: state.earn, limits: state.limits, rateHist: state.rateHist, rateHistAt: state.rateHistAt, theme: state.theme, mono: !!state.mono, accent: state.accent || "orbe", pin: state.pin, backupAt: state.backupAt, onb: state.onb, msumSeen: state.msumSeen, country: state.country, ratesOn: !!state.ratesOn, aiHide: !!state.aiHide, fx: state.fx || { bn: false, sg: false }, cqOff: !!state.cqOff, pullOff: !!state.pullOff, trendMode: state.trendMode === "30d" || state.trendMode === "none" ? state.trendMode : "mes", widgets: state.widgets || [], wCalc: state.wCalc || null, sgName: state.sgName || "", instSeen: state.instSeen, notif: state.notif, subs: state.subs, limCur: state.limCur, savTipOff: !!state.savTipOff, limPer: state.limPer, lastAcc: state.lastAcc, bn: state.bn, btcUsd: state.btcUsd, btcAt: state.btcAt, rateEur: state.rateEur, rateEurDate: state.rateEurDate, rateEurManual: state.rateEurManual, rateUsdt: state.rateUsdt, rateUsdtDate: state.rateUsdtDate, rateUsdtManual: state.rateUsdtManual, rateUsdtSrc: state.rateUsdtSrc, collapsed: state.collapsed, disp: state.disp, sav: state.sav, forz: state.forz, dayOn: !!state.dayOn, roundOn: !!state.roundOn }));
       window.__saveFail = 0;
     } catch (e) {
       if (!window.__saveFail && window.__toast) window.__toast("No se pudo guardar en este teléfono (puede estar sin espacio). Guarda una copia en Archivos desde Ajustes.");
@@ -5966,6 +5981,20 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   }
   function drawTrend() {
     var wrap = $("trend-chart"); if (!wrap) return;
+    // «Sin gráfico»: solo el total, grande, con lo que cambió en el mes
+    var off = state.trendMode === "none", hero = wrap.closest(".bal-hero");
+    $("trend").hidden = off; if (hero) hero.classList.toggle("no-trend", off);
+    var dl = $("bal-delta");
+    if (off) {
+      var D0 = state.disp, mm = state.month, net = 0;
+      state.items.forEach(function (it) { if (!it.fecha || it.fecha.slice(0, 7) !== mm || (it.tipo !== "ingreso" && it.tipo !== "gasto")) return; var v = conv(it.monto, it.moneda, D0); if (v !== null) net += it.tipo === "ingreso" ? v : -v; });
+      var cur = mm === today().slice(0, 7), qq = mm.split("-");
+      dl.className = "bal-delta " + (net > 0.004 ? "up" : net < -0.004 ? "down" : "flat");
+      dl.textContent = (net > 0.004 ? "▲ " : net < -0.004 ? "▼ " : "") + money(Math.abs(net), D0) + (cur ? " este mes" : " en " + MESES[Number(qq[1]) - 1]);
+      dl.hidden = !state.items.some(function (it) { return it.fecha && it.fecha.slice(0, 7) === mm && (it.tipo === "ingreso" || it.tipo === "gasto"); });
+      return;
+    }
+    dl.hidden = true;
     if (state.trendMode === "30d") { drawTrend30(); return; }
     var D = state.disp, m = state.month, q = m.split("-"), nd = new Date(Number(q[0]), Number(q[1]), 0).getDate(), t = today(), curM = t.slice(0, 7);
     var isCur = m === curM, last = isCur ? Number(t.slice(8, 10)) : m < curM ? nd : 0, mN = MESES_C[Number(q[1]) - 1];
@@ -12360,7 +12389,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     });
     document.querySelectorAll("[data-trend-set]").forEach(function (b) {
       b.addEventListener("click", function () {
-        state.trendMode = b.getAttribute("data-trend-set") === "30d" ? "30d" : "mes";
+        var tm = b.getAttribute("data-trend-set"); state.trendMode = tm === "30d" || tm === "none" ? tm : "mes";
         save(); renderSettings();
         try { var tw = $("trend-chart"); if (tw) tw._sig = ""; drawTrend(); } catch (e) {}
       });
@@ -12377,7 +12406,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     function backupDue() { return state.items.length > 0 && Date.now() - (state.backupAt || 0) > BACKUP_DAYS * 86400000; }
     function renderSetDot() { $("set-dot").hidden = !backupDue(); }
     function renderSettings() {
-      setPressed("[data-trend-set]", "data-trend-set", state.trendMode === "30d" ? "30d" : "mes");
+      setPressed("[data-trend-set]", "data-trend-set", state.trendMode === "30d" || state.trendMode === "none" ? state.trendMode : "mes");
       setPressed("[data-theme-set]", "data-theme-set", state.theme === "light" || state.theme === "dark" ? state.theme : "auto");
       var ak = state.mono ? "bn" : (state.accent || "orbe");
       document.querySelectorAll("[data-accent-set]").forEach(function (b) { b.setAttribute("aria-checked", b.getAttribute("data-accent-set") === ak ? "true" : "false"); });
@@ -13972,6 +14001,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     function tourAvail(st) {
       var h = document.documentElement.classList;
       if (st.sel === "#sg-sec" && h.contains("fx-no-sg")) return false;
+      if (st.sel === "#trend" && state.trendMode === "none") return false;
       if (st.sel === ".rate-card" && h.contains("loc-norates")) return false;
       return true;
     }
