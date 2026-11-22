@@ -3105,6 +3105,7 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 /* Sin gráfico: el resumen del mes se pliega y la píldora lo despliega */
 .bal-delta { border: 0; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s ease; }
 .bal-delta:active { transform: scale(.96); }
+.bal-hero:not(.no-trend) > .bal-delta:not([hidden]) { display: flex; width: max-content; margin: 16px auto 0; }
 .bal-delta .bd-chev { width: 13px; height: 13px; margin-left: 2px; transition: transform .4s cubic-bezier(.32,.72,0,1); }
 .bal-delta[aria-expanded="true"] .bd-chev { transform: rotate(180deg); }
 .bal-hero .flows { max-height: 120px; overflow: hidden; transition: max-height .45s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .45s cubic-bezier(.32,.72,0,1); }
@@ -6035,6 +6036,9 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var off = state.trendMode === "none", hero = wrap.closest(".bal-hero");
     $("trend").hidden = off; if (hero) hero.classList.toggle("no-trend", off);
     var dl = $("bal-delta");
+    // Sin gráfico va bajo el total; con gráfico, centrada debajo del gráfico
+    if (off) { if (dl.parentNode !== $("balance").parentNode) $("bal-note").after(dl); }
+    else if (dl.nextElementSibling !== $("flows")) $("flows").before(dl);
     // Píldora «este mes» en todos los modos: despliega u oculta ingresos, gastos y ahorrado
     {
       var D0 = state.disp, mm = state.month, net = 0;
