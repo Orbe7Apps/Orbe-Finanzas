@@ -3102,6 +3102,17 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 .bal-hero.no-trend .balance-amount { margin-top: 4px !important; }
 .bal-hero.no-trend .bal-delta { margin-top: 14px; }
 
+/* Sin gráfico: el resumen del mes se pliega y la píldora lo despliega */
+.bal-delta { border: 0; font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s ease; }
+.bal-delta:active { transform: scale(.96); }
+.bal-delta .bd-chev { width: 13px; height: 13px; margin-left: 2px; transition: transform .4s cubic-bezier(.32,.72,0,1); }
+.bal-delta[aria-expanded="true"] .bd-chev { transform: rotate(180deg); }
+.bal-hero.no-trend .flows { max-height: 120px; overflow: hidden; transition: max-height .45s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .45s cubic-bezier(.32,.72,0,1); }
+.bal-hero.no-trend.sum-off .flows { max-height: 0; opacity: 0; margin-top: 0; pointer-events: none; }
+.bal-hero.no-trend:not(.sum-off) .flows > * { animation: cgIn .45s cubic-bezier(.32,.72,0,1) backwards; }
+.bal-hero.no-trend:not(.sum-off) .flows > :nth-child(2) { animation-delay: .05s; } .bal-hero.no-trend:not(.sum-off) .flows > :nth-child(3) { animation-delay: .1s; }
+@media (prefers-reduced-motion: reduce) { .bal-hero.no-trend .flows, .bal-delta .bd-chev { transition: none; } .bal-hero.no-trend .flows > * { animation: none !important; } }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -3923,7 +3934,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         <div class="disp-pop" id="disp-pop" role="menu" aria-label="Ver en otra moneda" hidden></div>
         <div class="balance-amount fit" id="balance">$0,00</div>
         <div class="bal-note" id="bal-note" hidden></div>
-        <div class="bal-delta" id="bal-delta" hidden></div>
+        <button type="button" class="bal-delta" id="bal-delta" aria-controls="flows" aria-expanded="false" hidden></button>
       </div>
       <div class="seg" role="group" aria-label="Moneda para mostrar">
         <button type="button" data-disp="USD" aria-pressed="true">USD</button>
@@ -3936,7 +3947,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       <div class="trend-axis" id="trend-days"></div>
       <div class="trend-cap"><span class="tk"><i></i>Disponible</span><span class="tk proj" id="trend-proj"><i></i><span id="trend-title"></span></span></div>
     </div>
-    <div class="flows">
+    <div class="flows" id="flows">
       <div class="flow in" data-flow-go="ingreso" role="button" tabindex="0" aria-label="Ver tus ingresos"><div class="v fit" id="tin">$0,00</div><div class="l">Ingresos</div></div>
       <div class="flow out" data-flow-go="gasto" role="button" tabindex="0" aria-label="Ver tus gastos"><div class="v fit" id="tout">$0,00</div><div class="l">Gastos</div></div>
       <div class="flow sv" data-flow-go="ahorro" role="button" tabindex="0" aria-label="Ver tus ahorros"><div class="v fit" id="tsv">$0,00</div><div class="l">Ahorrado <button type="button" class="eye eye-btn" aria-pressed="false"></button></div></div>
@@ -5424,6 +5435,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         if (d && typeof d.cqOff === "boolean") state.cqOff = d.cqOff;
         if (d && typeof d.pullOff === "boolean") state.pullOff = d.pullOff;
         if (d && (d.trendMode === "30d" || d.trendMode === "none" || d.trendMode === "mes")) state.trendMode = d.trendMode;
+        state.sumOpen = !!(d && d.sumOpen);
         if (d && d.wCalc && /^(USD|EUR|USDT|VES)$/.test(d.wCalc.a) && /^(USD|EUR|USDT|VES)$/.test(d.wCalc.b)) state.wCalc = { a: d.wCalc.a, b: d.wCalc.b };
         if (d && Array.isArray(d.widgets)) state.widgets = d.widgets.filter(function (w) { return w && typeof w.k === "string" && /^[abc]$/.test(w.z); }).slice(0, 4);
         if (d && typeof d.sgName === "string") state.sgName = d.sgName.slice(0, 30);
@@ -5458,7 +5470,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   }
   function save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify({ items: state.items, rate: state.rate, rateDate: state.rateDate, hideSav: state.hideSav, rateManual: state.rateManual, rateAutoAt: state.rateAutoAt, accounts: state.accounts, templates: state.templates, goals: state.goals, payments: state.payments, paySeries: state.paySeries, earn: state.earn, limits: state.limits, rateHist: state.rateHist, rateHistAt: state.rateHistAt, theme: state.theme, mono: !!state.mono, accent: state.accent || "orbe", pin: state.pin, backupAt: state.backupAt, onb: state.onb, msumSeen: state.msumSeen, country: state.country, ratesOn: !!state.ratesOn, aiHide: !!state.aiHide, fx: state.fx || { bn: false, sg: false }, cqOff: !!state.cqOff, pullOff: !!state.pullOff, trendMode: state.trendMode === "30d" || state.trendMode === "none" ? state.trendMode : "mes", widgets: state.widgets || [], wCalc: state.wCalc || null, sgName: state.sgName || "", instSeen: state.instSeen, notif: state.notif, subs: state.subs, limCur: state.limCur, savTipOff: !!state.savTipOff, limPer: state.limPer, lastAcc: state.lastAcc, bn: state.bn, btcUsd: state.btcUsd, btcAt: state.btcAt, rateEur: state.rateEur, rateEurDate: state.rateEurDate, rateEurManual: state.rateEurManual, rateUsdt: state.rateUsdt, rateUsdtDate: state.rateUsdtDate, rateUsdtManual: state.rateUsdtManual, rateUsdtSrc: state.rateUsdtSrc, collapsed: state.collapsed, disp: state.disp, sav: state.sav, forz: state.forz, dayOn: !!state.dayOn, roundOn: !!state.roundOn }));
+      localStorage.setItem(KEY, JSON.stringify({ sumOpen: !!state.sumOpen, items: state.items, rate: state.rate, rateDate: state.rateDate, hideSav: state.hideSav, rateManual: state.rateManual, rateAutoAt: state.rateAutoAt, accounts: state.accounts, templates: state.templates, goals: state.goals, payments: state.payments, paySeries: state.paySeries, earn: state.earn, limits: state.limits, rateHist: state.rateHist, rateHistAt: state.rateHistAt, theme: state.theme, mono: !!state.mono, accent: state.accent || "orbe", pin: state.pin, backupAt: state.backupAt, onb: state.onb, msumSeen: state.msumSeen, country: state.country, ratesOn: !!state.ratesOn, aiHide: !!state.aiHide, fx: state.fx || { bn: false, sg: false }, cqOff: !!state.cqOff, pullOff: !!state.pullOff, trendMode: state.trendMode === "30d" || state.trendMode === "none" ? state.trendMode : "mes", widgets: state.widgets || [], wCalc: state.wCalc || null, sgName: state.sgName || "", instSeen: state.instSeen, notif: state.notif, subs: state.subs, limCur: state.limCur, savTipOff: !!state.savTipOff, limPer: state.limPer, lastAcc: state.lastAcc, bn: state.bn, btcUsd: state.btcUsd, btcAt: state.btcAt, rateEur: state.rateEur, rateEurDate: state.rateEurDate, rateEurManual: state.rateEurManual, rateUsdt: state.rateUsdt, rateUsdtDate: state.rateUsdtDate, rateUsdtManual: state.rateUsdtManual, rateUsdtSrc: state.rateUsdtSrc, collapsed: state.collapsed, disp: state.disp, sav: state.sav, forz: state.forz, dayOn: !!state.dayOn, roundOn: !!state.roundOn }));
       window.__saveFail = 0;
     } catch (e) {
       if (!window.__saveFail && window.__toast) window.__toast("No se pudo guardar en este teléfono (puede estar sin espacio). Guarda una copia en Archivos desde Ajustes.");
@@ -6024,11 +6036,14 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       state.items.forEach(function (it) { if (!it.fecha || it.fecha.slice(0, 7) !== mm || (it.tipo !== "ingreso" && it.tipo !== "gasto")) return; var v = conv(it.monto, it.moneda, D0); if (v !== null) net += it.tipo === "ingreso" ? v : -v; });
       var cur = mm === today().slice(0, 7), qq = mm.split("-");
       dl.className = "bal-delta " + (net > 0.004 ? "up" : net < -0.004 ? "down" : "flat");
-      dl.textContent = (net > 0.004 ? "▲ " : net < -0.004 ? "▼ " : "") + money(Math.abs(net), D0) + (cur ? " este mes" : " en " + MESES[Number(qq[1]) - 1]);
-      dl.hidden = !state.items.some(function (it) { return it.fecha && it.fecha.slice(0, 7) === mm && (it.tipo === "ingreso" || it.tipo === "gasto"); });
+      dl.innerHTML = esc((net > 0.004 ? "▲ " : net < -0.004 ? "▼ " : "") + money(Math.abs(net), D0) + (cur ? " este mes" : " en " + MESES[Number(qq[1]) - 1])) + '<svg class="bd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+      dl.hidden = false;
+      // Resumen del mes (ingresos, gastos, ahorrado): oculto por defecto; la píldora lo despliega
+      dl.setAttribute("aria-expanded", String(!!state.sumOpen)); dl.setAttribute("aria-label", (state.sumOpen ? "Ocultar" : "Ver") + " ingresos, gastos y ahorrado del mes");
+      if (hero) hero.classList.toggle("sum-off", !state.sumOpen);
       return;
     }
-    dl.hidden = true;
+    dl.hidden = true; if (hero) hero.classList.remove("sum-off");
     if (state.trendMode === "30d") { drawTrend30(); return; }
     var D = state.disp, m = state.month, q = m.split("-"), nd = new Date(Number(q[0]), Number(q[1]), 0).getDate(), t = today(), curM = t.slice(0, 7);
     var isCur = m === curM, last = isCur ? Number(t.slice(8, 10)) : m < curM ? nd : 0, mN = MESES_C[Number(q[1]) - 1];
@@ -13877,6 +13892,10 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       $("onb-dots").innerHTML = new Array(ONB.length + 1).join("<i></i>");
       $("onb-tour").addEventListener("click", function () { var b = $("onb-tour"); b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true"); });
     }
+    $("bal-delta").addEventListener("click", function () {
+      state.sumOpen = !state.sumOpen; save(); drawTrend();
+      try { navigator.vibrate && navigator.vibrate(6); } catch (x) {}
+    });
     function onbTrend() { document.querySelectorAll("[data-onb-trend]").forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-onb-trend") === (state.trendMode || "mes"))); }); }
     function goOnb(i) {
       onbTrend();
