@@ -3017,6 +3017,23 @@ html.mono #cloud-sheet .sheet::before { background: radial-gradient(110% 85% at 
 .te-rap-h { margin: 6px 2px 0; }
 @media (prefers-reduced-motion: reduce) { .amt-quick button { animation: none; } }
 
+/* Selector de categorías por grupos: buscador, títulos de grupo y tarjetas de dos columnas */
+.cat-chips.cg { display: grid !important; gap: 12px; border: 0 !important; background: none !important; padding: 0 !important; border-radius: 0 !important; max-height: none !important; overflow: visible !important; }
+.cg-search { display: flex !important; flex-direction: row !important; align-items: center; justify-content: flex-start; gap: 8px; height: 44px; padding: 0 14px !important; border-radius: 999px; background: var(--fill); color: var(--muted); margin: 0 !important; text-align: left !important; font-size: inherit !important; }
+.cg-search svg { width: 16px; height: 16px; flex: none; }
+#sheet .cg-search .cg-q, #te-sheet .cg-search .cg-q, .cg-search .cg-q { flex: 1; min-width: 0; border: 0 !important; background: none !important; box-shadow: none !important; outline: 0; padding: 0 !important; margin: 0 !important; min-height: 0 !important; height: auto !important; border-radius: 0 !important; font: inherit; font-size: 16px; color: var(--ink); }
+.cg-grp[hidden], .cg-row[hidden], .cg-none[hidden] { display: none !important; }
+.cg-h { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 0 4px 6px; text-align: left; }
+.cg-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 6px; border-radius: 22px; background: var(--fill); }
+.cg-row { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 7px 8px; border: 0; border-radius: 16px; background: none; color: var(--ink); font: inherit; font-size: .86rem; font-weight: 600; text-align: left; cursor: pointer; transition: background .2s ease, box-shadow .2s ease; -webkit-tap-highlight-color: transparent; }
+.cg-ic { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--surface)); }
+.cg-ic svg { width: 17px; height: 17px; }
+.cg-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cg-row[aria-checked="true"], .cg-row[aria-selected="true"] { background: color-mix(in srgb, var(--c) 14%, var(--surface)); box-shadow: inset 0 0 0 2px var(--c); }
+.cg-none { margin: 4px 0; color: var(--muted); font-size: .88rem; text-align: center; }
+#cat-chips.cg { margin-top: 12px !important; animation: aiUp .35s cubic-bezier(.32,.72,0,1) backwards; }
+html.mono .cg-row[aria-checked="true"], html.mono .cg-row[aria-selected="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -6858,14 +6875,48 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     }).join("");
     renderCatChips();
   }
+  // Categorías por grupos, en dos columnas y con buscador. La usan «Nuevo movimiento» y el editor de plantillas.
+  var CAT_GROUPS = {
+    gasto: [["Día a día", ["Alimentación", "Restaurantes", "Transporte", "Salud", "Cuidado personal", "Ropa"]], ["Casa", ["Vivienda", "Hogar", "Servicios", "Suscripciones", "Tecnología", "Mascotas"]], ["Tiempo libre", ["Ocio", "Viajes", "Regalos", "Educación"]], ["Dinero", ["Deudas", "Impuestos", "Comisiones bancarias", "Negocio", "Metas compartidas", "Otros"]]],
+    ingreso: [["Trabajo", ["Sueldo", "Freelance", "Negocio propio", "Ventas"]], ["Otros ingresos", ["Inversiones", "Remesas", "Regalos recibidos", "Reembolsos", "Ajustes de saldo", "Otros ingresos"]]]
+  };
+  function catNorm(t) { return String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  // list: categorías disponibles; cur: la elegida; attr: atributo que lee el manejador de clics; role: radio u option
+  function catGroupsHtml(tipo, list, cur, attr, role) {
+    var inc = tipo === "ingreso", seen = {}, groups = [];
+    (CAT_GROUPS[tipo] || []).forEach(function (g) {
+      var its = g[1].filter(function (c) { return list.indexOf(c) >= 0; });
+      its.forEach(function (c) { seen[c] = 1; });
+      if (its.length) groups.push([g[0], its]);
+    });
+    var extra = list.filter(function (c) { return !seen[c]; });   // las que no están en un grupo (por ejemplo, las que creaste)
+    if (extra.length) { if (groups.length) groups[groups.length - 1][1] = groups[groups.length - 1][1].concat(extra); else groups.push(["Categorías", extra]); }
+    var row = function (c) { var col = inc ? colorForIn(c) : colorFor(c); return '<button type="button" class="cg-row" role="' + role + '" ' + attr + '="' + esc(c) + '" aria-' + (role === "option" ? "selected" : "checked") + '="' + (c === cur) + '" style="--c:' + col + '"><span class="cg-ic">' + catSvg(c) + "</span><span class=\"cg-n\">" + esc(c) + "</span></button>"; };
+    return (list.length > 8 ? '<label class="cg-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="text" class="cg-q" placeholder="Buscar categoría" aria-label="Buscar categoría" autocomplete="off" enterkeyhint="search"></label>' : "") +
+      groups.map(function (g) { return '<div class="cg-grp"><div class="cg-h">' + esc(g[0]) + '</div><div class="cg-box">' + g[1].map(row).join("") + "</div></div>"; }).join("") +
+      '<p class="cg-none" hidden>No hay ninguna categoría con ese nombre.</p>';
+  }
+  // Buscador: filtra filas y oculta los grupos vacíos (se engancha una vez por contenedor)
+  function catGroupsWire(box) {
+    if (box._cgw) return; box._cgw = 1;
+    box.addEventListener("input", function (e) {
+      if (!e.target.classList.contains("cg-q")) return;
+      var q = catNorm(e.target.value.trim()), any = false;
+      box.querySelectorAll(".cg-grp").forEach(function (g) {
+        var vis = 0;
+        g.querySelectorAll(".cg-row").forEach(function (b) { var ok = !q || catNorm(b.textContent).indexOf(q) >= 0; b.hidden = !ok; if (ok) vis++; });
+        g.hidden = !vis; if (vis) any = true;
+      });
+      var n = box.querySelector(".cg-none"); if (n) n.hidden = any;
+    });
+  }
   function renderCatChips() {
     var w = $("cat-chips");
     if (!w) return;
     var cur = $("cat").value, inc = state.type === "ingreso";
-    w.innerHTML = Array.prototype.map.call($("cat").options, function (o) {
-      var c = o.value, col = inc ? colorForIn(c) : colorFor(c);
-      return '<button type="button" role="radio" class="cat-chip" data-cat-pick="' + esc(c) + '" aria-checked="' + (c === cur ? "true" : "false") + '" style="--c:' + col + '">' + catSvg(c) + esc(c) + "</button>";
-    }).join("");
+    w.classList.add("cg");
+    w.innerHTML = catGroupsHtml(state.type, Array.prototype.map.call($("cat").options, function (o) { return o.value; }), cur, "data-cat-pick", "option");
+    catGroupsWire(w);
     var am = $("amt-card"); if (am) am.classList.toggle("is-in", inc);
     var cq = $("cat-quick");
     if (cq) {
@@ -8313,6 +8364,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     $("cat-btn").addEventListener("click", function () {
       var open = $("cat-chips").hidden;
       $("cat-chips").hidden = !open; $("cat-btn").setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) { var q = $("cat-chips").querySelector(".cg-q"); if (q && q.value) { q.value = ""; q.dispatchEvent(new Event("input", { bubbles: true })); } }
     });
     function syncCuenta() {
       renderCatChips();
@@ -9889,9 +9941,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     function tplColor(t) { return (t.color && HEX_RE.test(t.color)) ? t.color : (t.tipo === "ingreso" ? colorForIn(t.cat) : colorFor(t.cat)); }
     function drawTeCats() {
       var cur = $("te-cat").value, inc = teType === "ingreso";
-      $("te-cats").innerHTML = CATS[teType].map(function (c) {
-        return '<button type="button" role="radio" class="cat-chip" data-te-cat="' + esc(c) + '" aria-checked="' + (c === cur) + '" style="--c:' + (inc ? colorForIn(c) : colorFor(c)) + '">' + catSvg(c) + esc(c) + "</button>";
-      }).join("");
+      var box = $("te-cats"), q = box.querySelector(".cg-q"), qv = q ? q.value : "";
+      box.classList.add("cg");
+      box.innerHTML = catGroupsHtml(teType, CATS[teType], cur, "data-te-cat", "radio");
+      catGroupsWire(box);
+      if (qv) { var nq = box.querySelector(".cg-q"); if (nq) { nq.value = qv; nq.dispatchEvent(new Event("input", { bubbles: true })); } }
     }
     function drawTeColors() {
       var sel = teColor || ($("te-cat").value ? (teType === "ingreso" ? colorForIn($("te-cat").value) : colorFor($("te-cat").value)) : TPL_COLORS[0]);
