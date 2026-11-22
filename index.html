@@ -3085,6 +3085,11 @@ html.mono .bal-delta { color: var(--ink) !important; background: var(--fill) !im
 html.mono .oa-mini em { color: var(--ink); background: var(--fill); }
 @media (prefers-reduced-motion: reduce) { .oa-mini { transition: none; } }
 
+/* Orbe de Cuentas: con el punto, el texto del centro se esconde; al elegir una cuenta entra con el disco */
+.ao-mid .ao-txt { transition: opacity .35s ease .08s, transform .45s cubic-bezier(.34,1.56,.64,1) .05s; }
+.ao-mid.dot .ao-txt { opacity: 0; transform: scale(.4); transition: opacity .15s ease, transform .2s ease; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .ao-mid .ao-txt, .ao-mid.dot .ao-txt { transition: none; } }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -8863,6 +8868,8 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       var TX = [0.10, -0.16, 0.20, -0.08, 0.14], TZ = [-0.06, 0.13, -0.10, 0.18, -0.15];
       var RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
       var rings = [], sel = null, spin = 0, data = [], extra = {}, raf = 0, last = 0, seen = false, sig = "";
+      // cfg.dot: sin nada elegido, el centro es un punto que late (como el logo); al tocar una cuenta crece y muestra su monto
+      var DOT = 15, cr = cfg.dot ? DOT : CORE, crT = cr, pulse = 0;
       box.innerHTML = '<canvas class="ao-cv" aria-hidden="true"></canvas><div class="ao-mid g3" aria-live="polite"></div><i class="ao-probe" hidden></i>';
       var cv = box.querySelector("canvas"), ctx = cv.getContext("2d"), mid = box.querySelector(".ao-mid"), probe = box.querySelector(".ao-probe");
       // Colores resueltos a rgb (sirve para variables CSS y para el modo blanco y negro); se recalculan si cambia el tema
@@ -8949,13 +8956,17 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         // Capas: guías de atrás, núcleo, guías de delante; y encima todas las líneas de color (las de atrás, recortadas fuera del núcleo).
         // Así ninguna guía corta una línea, y las líneas entre sí se ordenan tramo a tramo por profundidad.
         dust(false); tracks(tracksB);
-        ctx.shadowColor = "rgba(20,16,50,.2)"; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "rgba(0,0,0,0)";
-        ctx.strokeStyle = mix(sf, bg, 0.55); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(CX, CY, CORE + 3, 0, 6.3); ctx.stroke();
+        var kk = Math.max(0, Math.min(1, (cr - DOT) / (CORE - DOT))), ac = rgb("var(--accent)"), coreFill = cfg.dot ? mix(sf, ac, Math.min(1, kk * 1.6)) : css(sf);
+        if (cfg.dot && kk < 0.98) { // halo que late alrededor del punto
+          var ph = (Math.sin(pulse) + 1) / 2; ctx.globalAlpha = (1 - kk) * (0.10 + ph * 0.12); ctx.fillStyle = css(ac); ctx.beginPath(); ctx.arc(CX, CY, cr + 7 + ph * 7, 0, 6.3); ctx.fill(); ctx.globalAlpha = 1;
+        }
+        ctx.shadowColor = cfg.dot ? "rgba(20,16,50," + (0.08 + kk * 0.12).toFixed(3) + ")" : "rgba(20,16,50,.2)"; ctx.shadowBlur = 8 + kk * 14; ctx.shadowOffsetY = 3 + kk * 5; ctx.fillStyle = coreFill; ctx.beginPath(); ctx.arc(CX, CY, cr, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowColor = "rgba(0,0,0,0)";
+        if (kk > 0.05) { ctx.globalAlpha = kk; ctx.strokeStyle = mix(sf, bg, 0.55); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(CX, CY, cr + 3, 0, 6.3); ctx.stroke(); ctx.globalAlpha = 1; }
         tracks(tracksF); dust(true);
-        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.arc(CX, CY, CORE + 6, 0, 6.2832, true); ctx.clip("evenodd"); lits(litB); ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.arc(CX, CY, cr + 6, 0, 6.2832, true); ctx.clip("evenodd"); lits(litB); ctx.restore();
         lits(litF);
         // El núcleo es como un vidrio esmerilado: lo que le pasa por delante se ve tenue y el texto siempre se lee
-        ctx.globalAlpha = 0.86; ctx.fillStyle = css(sf); ctx.beginPath(); ctx.arc(CX, CY, CORE - 1, 0, 6.3); ctx.fill();
+        ctx.globalAlpha = 0.86 * (cfg.dot ? kk : 1); ctx.fillStyle = coreFill; ctx.beginPath(); ctx.arc(CX, CY, cr - 1, 0, 6.3); ctx.fill();
         ctx.globalAlpha = 1;
       }
       function kick() { if (!raf) draw(); }
@@ -8985,6 +8996,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         var r = sel == null ? null : data.filter(function (x) { return String(cfg.id(x)) === sel; })[0];
         if (sel != null && !r) sel = null;
         box.setAttribute("data-sel", sel == null ? "" : sel);
+        if (cfg.dot) { crT = sel == null ? DOT : CORE; mid.classList.toggle("dot", sel == null); if (RM) cr = crT; }
         if (list) {
           Array.prototype.forEach.call(list.querySelectorAll("[data-acc-pick]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-acc-pick") === sel)); });
           list.classList.toggle("dim", sel != null);
@@ -9043,7 +9055,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         if (moved > 0.05) return;
         vx = vy = 0;
         var m = pt(e), hit = null, bd = Math.max(13, SW);
-        if (Math.hypot(m.x - CX, m.y - CY) >= CORE) rings.forEach(function (q) { for (var k = 0; k < SEG; k += 2) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832), pp = proj(t3[0], t3[1], t3[2]), d = Math.hypot(pp[0] - m.x, pp[1] - m.y); if (d < bd) { bd = d; hit = q.id; } } });
+        if (Math.hypot(m.x - CX, m.y - CY) >= Math.max(cr, 24)) rings.forEach(function (q) { for (var k = 0; k < SEG; k += 2) { var t3 = ringPt(q, q.a0 + k / SEG * 6.2832), pp = proj(t3[0], t3[1], t3[2]), d = Math.hypot(pp[0] - m.x, pp[1] - m.y); if (d < bd) { bd = d; hit = q.id; } } });
         if (hit != null) pick(hit);
         else if (sel != null) { sel = null; applySel(true); }
         // Doble toque en un espacio vacío (sin anillo debajo): vuelve a la vista plana
@@ -9069,8 +9081,10 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           rings.forEach(function (q) { q.a0 += q.w * dt * (sel === q.id ? 1 + spin * 6 : 1); });
         }
         spin *= 0.94;
+        if (Math.abs(crT - cr) > 0.2) cr += (crT - cr) * Math.min(1, dt * (crT > cr ? 7 : 9)); else cr = crT;   // crece rápido y con un rebote suave
+        pulse += dt * 2.2;
         draw();
-        var moving = !RM || drag || homing || tf !== tgt || Math.abs(vx) + Math.abs(vy) > 0.0004;
+        var moving = !RM || drag || homing || tf !== tgt || cr !== crT || Math.abs(vx) + Math.abs(vy) > 0.0004;
         if (moving && seen && !document.hidden && here()) raf = requestAnimationFrame(tick);
       }
       // Solo se anima en su pantalla: Inicio (sin vista abierta) o la vista que indique cfg.view
@@ -9088,7 +9102,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     }
     // Cuentas (Inicio): un anillo por cuenta con saldo, de mayor a menor
     (function () {
-      var o = makeOrb({ box: $("acc-sum"), list: $("acc-list"), seed: 23, frac: function (r) { return Math.max(0.045, r.p); },
+      var o = makeOrb({ box: $("acc-sum"), list: $("acc-list"), seed: 23, dot: true, frac: function (r) { return Math.max(0.045, r.p); },
         rings: function (d) { return d.filter(function (r) { return r.u > 0; }).sort(function (x, y) { return y.u - x.u; }).slice(0, 5); },
         id: function (r) { return r.a.id; }, color: function (r) { return accColor(r.a); },
         sig: function (r) { return r.a.id + ":" + r.p.toFixed(4) + ":" + accColor(r.a); },
