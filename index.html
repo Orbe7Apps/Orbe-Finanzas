@@ -9046,8 +9046,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       // Girar con el dedo en cualquier dirección, con inercia. El primer gesto empieza de lado (hacia arriba o abajo se desplaza la página);
       // mientras lo estás moviendo, y unos segundos después de soltarlo, cualquier arrastre sobre el orbe lo gira (también hacia arriba y abajo).
       var drag = null;
-      box.addEventListener("touchstart", function (e) { if (Date.now() < freeUntil && e.cancelable) e.preventDefault(); }, { passive: false });
-      box.addEventListener("touchmove", function (e) { if ((drag && drag.rot || Date.now() < freeUntil) && e.cancelable) e.preventDefault(); }, { passive: false });
+      box.addEventListener("touchmove", function (e) { if (drag && drag.rot && e.cancelable) e.preventDefault(); }, { passive: false });
       function pt(e) { var r = box.getBoundingClientRect(); return { x: (e.clientX - r.left) * VW / r.width, y: (e.clientY - r.top) * VH / r.height }; }
       box.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY, moved: 0, ax: 0, ay: 0, rot: false, id: e.pointerId }; vx = vy = 0; });
       box.addEventListener("pointermove", function (e) {
@@ -9056,7 +9055,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         drag.ax += Math.abs(dx); drag.ay += Math.abs(dy);
         if (!drag.rot && drag.moved > 0.05) {
           // Fuera de la ventana libre, un gesto que arranca hacia arriba o abajo es para desplazar la página: no se agarra
-          if (e.pointerType === "touch" && Date.now() >= freeUntil && drag.ay > drag.ax) { drag = null; return; }
+          if (e.pointerType === "touch" && drag.ay > drag.ax * 0.7) { drag = null; return; }   // vertical: es para desplazar la página
           drag.rot = true; try { box.setPointerCapture(e.pointerId); } catch (x) {} box.classList.add("grab");
         }
         if (drag.rot) { is3d = true; homing = false; box.setAttribute("data-3d", "1"); freeUntil = Date.now() + 3000; R = mul(mul(rx(-dy), ry(dx)), R); vx = dx; vy = -dy; if (!raf) { draw(); start(); } }
@@ -9079,8 +9078,12 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       box.addEventListener("pointerup", up); box.addEventListener("pointercancel", function () { drag = null; box.classList.remove("grab"); });
       if (list) list.addEventListener("click", function (e) { var b = e.target.closest("[data-acc-pick]"); if (b) pick(b.getAttribute("data-acc-pick"), true); });
       // Animación solo cuando el orbe se ve y la app está al frente
+      // Mientras desplazas la página el orbe se queda quieto (no se redibuja): el desplazamiento va fluido
+      var scrollT = 0;
+      window.addEventListener("scroll", function () { scrollT = Date.now(); }, { passive: true });
       function tick(now) {
         raf = 0; var dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+        if (!drag && Date.now() - scrollT < 180) { if (seen && !document.hidden && here()) raf = requestAnimationFrame(tick); return; }
         if (!drag) {
           if (homing) { // vuelve suave a la vista de frente
             var e2 = 0; R = ortho(R.map(function (v, i) { var d = HOME[i] - v; e2 += d * d; return v + d * Math.min(1, dt * 7); }));
