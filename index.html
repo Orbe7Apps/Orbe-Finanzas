@@ -2370,7 +2370,7 @@ html.ai-off .ai-fab { display: none !important; }
 /* Contraseñas: ojito para verla y confirmación al crear la cuenta */
 .pw-wrap { position: relative; }
 .pw-wrap input { width: 100%; padding-right: 50px !important; }
-.pw-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer; padding: 0; transition: color 0.2s ease; }
+.pw-eye { position: absolute; right: 4px; top: 0; bottom: 0; margin: auto 0; transform: none !important; width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer; padding: 0; transition: color 0.2s ease; }
 .pw-eye:active { color: var(--ink); }
 .pw-eye svg { width: 20px; height: 20px; grid-area: 1 / 1; transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
 .pw-eye .e-off { opacity: 0; transform: scale(0.8); }
@@ -2985,7 +2985,8 @@ html.mono .oa-me { color: var(--bg); }
 .ctry-list { background: var(--surface); border-radius: 24px; padding: 6px !important; }
 .ctry-go { border-radius: 999px !important; min-height: 52px; }
 /* Registro y entrada: cabecera con resplandor, ventajas en fila, campos en píldora */
-#cloud-sheet .sheet { overflow-x: hidden; }
+#cloud-sheet { bottom: var(--kb, 0px); transition: bottom .25s ease, opacity 0.3s ease, visibility 0s linear 0s; }
+#cloud-sheet .sheet { overflow-x: hidden; scroll-padding: 90px 0; }
 #cloud-sheet .sheet::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 220px; border-radius: 28px 28px 0 0; pointer-events: none;
   background: radial-gradient(110% 85% at 12% 0%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%), radial-gradient(85% 75% at 96% 6%, color-mix(in srgb, var(--in) 16%, transparent), transparent 62%);
   -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); }
@@ -3003,6 +3004,18 @@ html.mono #cloud-sheet .sheet::before { background: radial-gradient(110% 85% at 
 #cloud-sheet .cl-pwhint { text-align: left; margin-left: 6px; }
 #cloud-sheet .sheet-foot .primary { min-height: 52px; }
 @media (prefers-reduced-motion: reduce) { .onb::before, .ctry::before, .oa-spin { animation: none; } }
+
+/* Montos rápidos: tres píldoras debajo del monto */
+.amt-quick { display: flex; gap: 8px; margin: -4px 0 14px; }
+.amt-quick[hidden] { display: none; }
+.amt-quick button { flex: 1; min-width: 0; border: 0; border-radius: 999px; min-height: 40px; padding: 0 10px; background: var(--fill); color: var(--ink); font: inherit; font-weight: 700; font-size: .92rem; font-variant-numeric: tabular-nums; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .2s ease, color .2s ease, transform .15s ease; animation: aiUp .35s cubic-bezier(.32,.72,0,1) backwards; }
+.amt-quick button:nth-child(2) { animation-delay: .04s; } .amt-quick button:nth-child(3) { animation-delay: .08s; }
+.amt-quick button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink, #fff); }
+#tu-sheet .amt-quick { margin: 10px 0 4px; }
+.te-rap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.te-rap input { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.te-rap-h { margin: 6px 2px 0; }
+@media (prefers-reduced-motion: reduce) { .amt-quick button { animation: none; } }
 
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
@@ -4457,9 +4470,9 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.5-3.5 3.2-5.5 6.5-5.5s6 2 6.5 5.5"></path><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.5 5.2"></path></svg>Metas compartidas con tus amigos</li>
         </ul>
         <div class="grid">
-          <div class="wide"><label for="cl-email">Correo</label><input type="email" id="cl-email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="tu@correo.com"></div>
-          <div class="wide"><label for="cl-pass">Contraseña</label><div class="pw-wrap"><input type="password" id="cl-pass" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="current-password" placeholder="Tu contraseña"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div><p class="cl-pwhint" id="cl-pwhint" hidden>Mínimo 8 caracteres</p></div>
-          <div class="wide cl-conf" id="cl-conf" hidden><label for="cl-passc">Repite la contraseña</label><div class="pw-wrap"><input type="password" id="cl-passc" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password" placeholder="Escríbela otra vez"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div><p class="pw-match" id="cl-match" aria-live="polite"></p></div>
+          <div class="wide"><label for="cl-email">Correo</label><input type="email" id="cl-email" enterkeyhint="next" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="tu@correo.com"></div>
+          <div class="wide"><label for="cl-pass">Contraseña</label><div class="pw-wrap"><input type="password" id="cl-pass" enterkeyhint="go" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="current-password" placeholder="Tu contraseña"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div><p class="cl-pwhint" id="cl-pwhint" hidden>Mínimo 8 caracteres</p></div>
+          <div class="wide cl-conf" id="cl-conf" hidden><label for="cl-passc">Repite la contraseña</label><div class="pw-wrap"><input type="password" id="cl-passc" enterkeyhint="go" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password" placeholder="Escríbela otra vez"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div><p class="pw-match" id="cl-match" aria-live="polite"></p></div>
         </div>
         <p class="error" id="cl-err" role="alert"></p>
         <button type="button" class="lock-forgot" id="cl-forgot">Olvidé mi contraseña</button>
@@ -4467,8 +4480,8 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       </div>
       <div id="cl-new" hidden>
         <p class="hint">Escribe tu nueva contraseña.</p>
-        <div class="grid"><div class="wide"><label for="cl-pass2">Nueva contraseña</label><div class="pw-wrap"><input type="password" id="cl-pass2" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
-          <div class="wide"><label for="cl-pass2c">Repite la contraseña</label><div class="pw-wrap"><input type="password" id="cl-pass2c" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password" placeholder="Escríbela otra vez"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div><p class="pw-match" id="cl-match2" aria-live="polite"></p></div></div>
+        <div class="grid"><div class="wide"><label for="cl-pass2">Nueva contraseña</label><div class="pw-wrap"><input type="password" id="cl-pass2" enterkeyhint="next" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
+          <div class="wide"><label for="cl-pass2c">Repite la contraseña</label><div class="pw-wrap"><input type="password" id="cl-pass2c" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password" placeholder="Escríbela otra vez"><button type="button" class="pw-eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="e-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="e-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div><p class="pw-match" id="cl-match2" aria-live="polite"></p></div></div>
         <p class="error" id="cl-err2" role="alert"></p>
         <div class="sheet-foot"><button type="button" class="primary" id="cl-pass-save">Guardar contraseña</button></div>
       </div>
@@ -4540,6 +4553,17 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         <div><b>Prueba el enlace</b><small>Abre Orbe como lo hará el atajo, con un monto de ejemplo.</small></div>
         <button type="button" class="secondary" id="siri-try">Probar</button>
       </div>
+      <details class="siri-more siri-pay">
+        <summary>Anotar solo lo que pagas con Apple Pay</summary>
+        <p>El iPhone puede avisarle a Orbe cada vez que pagas sin contacto con el teléfono, y el gasto se anota solo con el monto y el nombre del comercio.</p>
+        <ol class="siri-steps">
+          <li>Abre <b>Atajos</b> → <b>Automatización</b> → <b>+</b> → <b>Transacción</b>.</li>
+          <li>Elige tus tarjetas y toca <b>Siguiente</b>. Marca <b>Ejecutar inmediatamente</b>.</li>
+          <li>Agrega la acción <b>Abrir URL</b> y pega este enlace; al final, inserta las variables <b>Cantidad</b> y <b>Comercio</b> donde dice:</li>
+        </ol>
+        <div class="siri-url"><code id="pay-url"></code><button type="button" id="pay-copy">Copiar</button></div>
+        <p>Orbe usa la categoría que le pusiste la última vez a ese comercio, y te muestra «Deshacer» por si no querías anotarlo.</p>
+      </details>
       <details class="siri-more">
         <summary>Opciones y preguntas</summary>
         <p>Puedes elegir la categoría, la cuenta y una nota agregándolas al enlace, antes de la variable. Por ejemplo: <code id="siri-ex"></code></p>
@@ -4970,6 +4994,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           <div class="acc-colors" id="te-colors" role="radiogroup" aria-label="Color de la plantilla"></div>
         </div>
         <div class="wide">
+          <label id="te-rap-l">Montos rápidos (opcional)</label>
+          <div class="te-rap" role="group" aria-labelledby="te-rap-l"><input type="text" id="te-r1" inputmode="decimal" autocomplete="off" placeholder="5,00" aria-label="Monto rápido 1"><input type="text" id="te-r2" inputmode="decimal" autocomplete="off" placeholder="10,00" aria-label="Monto rápido 2"><input type="text" id="te-r3" inputmode="decimal" autocomplete="off" placeholder="20,00" aria-label="Monto rápido 3"></div>
+          <p class="hint te-rap-h">Al usar la plantilla aparecen debajo del monto: un toque y listo.</p>
+        </div>
+        <div class="wide">
           <label for="te-nota">Nota (opcional)</label>
           <input type="text" id="te-nota" maxlength="80" placeholder="Ej: pago del mes">
         </div>
@@ -4988,6 +5017,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       </div>
       <label for="tu-monto" id="tu-monto-label">Monto</label>
       <input type="text" id="tu-monto" inputmode="decimal" autocomplete="off" placeholder="0,00">
+      <div class="amt-quick" id="tu-quick" role="group" aria-label="Montos rápidos" hidden></div>
       <p class="error" id="tu-err" role="alert"></p>
       <div class="sheet-foot"><button type="button" class="primary" id="tu-go">Agregar</button></div>
     </section>
@@ -5150,6 +5180,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       <input type="text" id="monto" inputmode="decimal" autocomplete="off" placeholder="0,00">
       <div class="amt-ops"><span class="amt-res" id="amt-res"></span></div>
     </div>
+    <div class="amt-quick" id="amt-quick" role="group" aria-label="Montos rápidos" hidden></div>
     <div class="grid">
       <div>
         <label id="cuenta-l">Cuenta</label>
@@ -8431,10 +8462,45 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       }
       splitParts = []; $("split-rows").innerHTML = ""; $("sub-new").hidden = true;
       syncCuenta(); renderSub(); renderSplit();
+      mqVals = null; renderMq();
       $("sheet").hidden = false;
 
     }
     function closeSheet() { state.editId = null; $("sheet").hidden = true; $("fab").focus(); }
+    /* Montos rápidos: los de la plantilla, o los que más repites en esa categoría (últimos 4 meses) */
+    function quickFmt(v, cur) { return money(v, cur, Math.abs(v - Math.round(v)) < 0.005 ? 0 : 2); }
+    function quickFreq(tipo, cat, cur) {
+      var from = addDaysIso(today(), -120), cnt = {}, last = {};
+      state.items.forEach(function (it) {
+        if (it.tipo !== tipo || it.moneda !== cur || it.fecha < from || !(it.monto > 0)) return;
+        if (cat && it.cat !== cat) return;
+        var k = (Math.round(it.monto * 100) / 100).toFixed(2); cnt[k] = (cnt[k] || 0) + 1; if (!last[k] || it.fecha > last[k]) last[k] = it.fecha;
+      });
+      return Object.keys(cnt).filter(function (k) { return cnt[k] >= 2; }).sort(function (a, b) { return cnt[b] - cnt[a] || (last[b] > last[a] ? 1 : -1); }).slice(0, 3).map(Number).sort(function (a, b) { return a - b; });
+    }
+    function quickDraw(box, vals, cur, input) {
+      box.hidden = !vals.length;
+      var now = parseNum(input.value);
+      box.innerHTML = vals.map(function (v) { return '<button type="button" data-q="' + v + '" aria-pressed="' + (Math.abs((now || 0) - v) < 0.005) + '">' + esc(quickFmt(v, cur)) + "</button>"; }).join("");
+    }
+    function quickPick(box, input, e) {
+      var b = e.target.closest("[data-q]"); if (!b) return;
+      input.value = moneyIn(Number(b.getAttribute("data-q")));
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      try { navigator.vibrate && navigator.vibrate(6); } catch (x) {}
+    }
+    var mqVals = null;   // montos fijados por una plantilla o un atajo
+    function renderMq() {
+      var box = $("amt-quick"); if (!box) return;
+      if (state.editId) { box.hidden = true; return; }
+      var cur = $("moneda").value, vals = mqVals && mqVals.length ? mqVals : quickFreq(state.type, $("cat").value, cur);
+      quickDraw(box, vals, cur, $("monto"));
+    }
+    $("amt-quick").addEventListener("click", function (e) { quickPick($("amt-quick"), $("monto"), e); });
+    $("monto").addEventListener("input", function () { [].forEach.call($("amt-quick").children, function (b) { b.setAttribute("aria-pressed", String(Math.abs((parseNum($("monto").value) || 0) - Number(b.getAttribute("data-q"))) < 0.005)); }); });
+    $("cat").addEventListener("change", renderMq);
+    $("cuenta").addEventListener("change", function () { setTimeout(renderMq, 0); });
+    document.querySelectorAll("[data-type]").forEach(function (b) { b.addEventListener("click", function () { mqVals = null; setTimeout(renderMq, 0); }); });
     function openDial() { setTimeout(function () { bgLock(true); }, 0); $("dial").hidden = false; document.body.classList.add("dial-open"); $("fab").setAttribute("aria-expanded", "true"); }
     // Con una hoja o el menú + abiertos el fondo no se desplaza (en iPhone hay que fijar el body)
     var bgY = 0, bgOn = false;
@@ -9906,6 +9972,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       fillTeCats(t ? t.cat : null);
       fillTeAccs(t ? t.cuenta : state.lastAcc);
       $("te-err").textContent = "";
+      ["te-r1", "te-r2", "te-r3"].forEach(function (id, i) { var v = t && t.rap ? t.rap[i] : null; $(id).value = v > 0 ? moneyIn(v) : ""; });
       $("te-sheet").hidden = false;
 
     }
@@ -9923,10 +9990,12 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       var nombre = $("te-nombre").value.trim(), err = $("te-err");
       if (!nombre) { err.textContent = "Ponle un nombre a la plantilla."; $("te-nombre").focus(); return; }
       if (!$("te-cuenta").value) { err.textContent = "Elige la cuenta."; return; }
-      var data = { nombre: nombre, tipo: teType, cuenta: Number($("te-cuenta").value), cat: $("te-cat").value, nota: $("te-nota").value.trim(), color: teColor || undefined };
+      var rap = ["te-r1", "te-r2", "te-r3"].map(function (id) { return parseNum($(id).value); }).filter(function (v) { return v > 0; }).map(function (v) { return Math.round(v * 100) / 100; });
+      rap = rap.filter(function (v, i) { return rap.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+      var data = { nombre: nombre, tipo: teType, cuenta: Number($("te-cuenta").value), cat: $("te-cat").value, nota: $("te-nota").value.trim(), color: teColor || undefined, rap: rap.length ? rap : undefined };
       if (teId) {
         var t = tplById(teId);
-        if (t) { t.nombre = data.nombre; t.tipo = data.tipo; t.cuenta = data.cuenta; t.cat = data.cat; t.nota = data.nota; t.color = data.color; }
+        if (t) { t.nombre = data.nombre; t.tipo = data.tipo; t.cuenta = data.cuenta; t.cat = data.cat; t.nota = data.nota; t.color = data.color; t.rap = data.rap; }
       } else {
         data.id = Date.now();
         state.templates.push(data);
@@ -9943,7 +10012,9 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       if (!t || !a) return;
       $("tu-sub").textContent = (tuType === "ingreso" ? "Ingreso" : "Gasto") + " · " + tuCat(t) + " · " + a.nombre + " (" + curLabel(a.moneda) + ")";
       $("tu-monto-label").textContent = "Monto (" + curLabel(a.moneda) + ")";
+      quickDraw($("tu-quick"), t.rap && t.rap.length ? t.rap : quickFreq(tuType, tuCat(t), a.moneda), a.moneda, $("tu-monto"));
     }
+    $("tu-quick").addEventListener("click", function (e) { quickPick($("tu-quick"), $("tu-monto"), e); [].forEach.call($("tu-quick").children, function (b) { b.setAttribute("aria-pressed", String(b === e.target.closest("[data-q]"))); }); });
     function openTu(t) {
       if (!t) return;
       if (!accById(t.cuenta)) { showToast("La cuenta de esta plantilla ya no existe. Edítala para elegir otra."); return; }
@@ -12535,6 +12606,28 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     document.querySelectorAll("[data-clm]").forEach(function (b) { b.addEventListener("click", function () { clMode(b.getAttribute("data-clm") === "up"); }); });
     function pwHint() { var ok = $("cl-pass").value.length >= 8; $("cl-pwhint").textContent = ok ? "✓ Mínimo 8 caracteres" : "Mínimo 8 caracteres"; $("cl-pwhint").classList.toggle("ok", ok); }
     $("cl-pass").addEventListener("input", pwHint);
+    // Teclado: «siguiente» pasa al campo de abajo y la tecla final envía
+    function clEnter(id, next) { $(id).addEventListener("keydown", function (e) { if (e.key !== "Enter") return; e.preventDefault(); var n = typeof next === "function" ? next() : next; if (n && $(n).tagName === "INPUT") $(n).focus(); else if (n) $(n).click(); }); }
+    clEnter("cl-email", "cl-pass");
+    clEnter("cl-pass", function () { return $("cl-conf").hidden ? "cl-in" : "cl-passc"; });
+    clEnter("cl-passc", "cl-in");
+    clEnter("cl-pass2", "cl-pass2c");
+    clEnter("cl-pass2c", "cl-pass-save");
+    // Con el teclado abierto, la hoja sube por encima de él y el campo activo queda a la vista
+    (function () {
+      var bd = $("cloud-sheet"), sh = bd.querySelector(".sheet");
+      function kb() {
+        var vv = window.visualViewport; if (!vv || bd.hidden) return;
+        var k = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        bd.style.setProperty("--kb", (k > 60 ? k : 0) + "px");
+      }
+      if (window.visualViewport) { window.visualViewport.addEventListener("resize", kb); window.visualViewport.addEventListener("scroll", kb); }
+      sh.addEventListener("focusin", function (e) {
+        if (!e.target.matches("input")) return;
+        setTimeout(function () { kb(); var r = e.target.getBoundingClientRect(), s = sh.getBoundingClientRect(); if (r.bottom > s.bottom - 90 || r.top < s.top + 60) sh.scrollTo({ top: sh.scrollTop + r.top - s.top - s.height * 0.35, behavior: "smooth" }); }, 320);
+      });
+      sh.addEventListener("focusout", function () { setTimeout(kb, 120); });
+    })();
     // Paso de la cuenta en la bienvenida: crear cuenta, entrar o seguir sin cuenta
     var clGate = null;
     window.__accGate = function (next) {
@@ -12632,6 +12725,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       $("siri-name").textContent = g ? "Agregar gasto" : "Agregar ingreso";
       $("siri-say").textContent = g ? "agregar gasto" : "agregar ingreso";
       var cat = g ? "Transporte" : "Sueldo";
+      $("pay-url").textContent = payUrl();
       $("siri-ex").textContent = siriBase() + "?" + (g ? "cat=" + cat + "&nota=Taxi&" : "cat=" + cat + "&") + siriK + "=";
     }
     document.querySelectorAll("[data-siri-k]").forEach(function (b) { b.addEventListener("click", function () { siriK = b.getAttribute("data-siri-k"); renderSiri(); }); });
@@ -12644,6 +12738,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     });
     $("siri-close").addEventListener("click", function () { $("siri-sheet").hidden = true; });
     $("siri-sheet").addEventListener("click", function (e) { if (e.target === $("siri-sheet")) $("siri-sheet").hidden = true; });
+    function payUrl() { return siriBase() + "?guardar=1&gasto=CANTIDAD&comercio=COMERCIO"; }
+    $("pay-copy").addEventListener("click", function () {
+      var t = payUrl();
+      try { navigator.clipboard.writeText(t).then(function () { showToast("Enlace copiado."); }, function () { showToast("Mantén presionado el enlace para copiarlo."); }); } catch (e) { showToast("Mantén presionado el enlace para copiarlo."); }
+    });
     $("siri-copy").addEventListener("click", function () {
       var t = siriUrl();
       try { navigator.clipboard.writeText(t).then(function () { showToast("Enlace copiado."); }, function () { showToast("Mantén presionado el enlace para copiarlo."); }); } catch (e) { showToast("Mantén presionado el enlace para copiarlo."); }
@@ -12652,7 +12751,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     window.__orbeDeep = function (q) {
       var tipo = q.has("gasto") ? "gasto" : q.has("ingreso") ? "ingreso" : "";
       if (!tipo) return;
-      var amt = parseNum(String(q.get(tipo) || "").replace(/\s/g, ""));
+      // Acepta «12,50», «$12.50», «Bs 1.234,56» o «USD 12.50» (como lo entrega el atajo de Apple Pay)
+      var raw = String(q.get(tipo) || "").replace(/\s/g, "").replace(/[^\d.,-]/g, "");
+      if (/\.\d{1,2}$/.test(raw) && raw.indexOf(",") < 0) raw = raw.replace(".", ",");
+      else if (/,\d{3}\.\d{1,2}$/.test(raw)) raw = raw.replace(/,/g, "").replace(".", ",");
+      var amt = parseNum(raw), auto = q.get("guardar") === "1";
       var tries = 0;
       (function go() {
         var busy = !$("lock").hidden || !$("onb").hidden || document.documentElement.classList.contains("hold");
@@ -12663,7 +12766,20 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
         var cat = q.get("cat"); if (cat && CATS[tipo].indexOf(cat) >= 0) { $("cat").value = cat; $("cat").dispatchEvent(new Event("change", { bubbles: true })); renderCatChips(); }
         var cu = q.get("cuenta"); if (cu) { var a = state.accounts.filter(function (x) { return x.nombre.toLowerCase() === cu.toLowerCase(); })[0]; if (a) { $("cuenta").value = String(a.id); $("cuenta").dispatchEvent(new Event("change", { bubbles: true })); renderAccPick(); } }
         if (amt > 0) { $("monto").value = moneyIn(amt); $("monto").dispatchEvent(new Event("input", { bubbles: true })); }
-        if (q.get("nota")) $("nota").value = q.get("nota").slice(0, 80);
+        var nota = String(q.get("nota") || q.get("comercio") || "").trim().slice(0, 80);
+        if (nota) $("nota").value = nota;
+        // Sin categoría en el enlace: usa la que le pusiste la última vez a ese mismo comercio
+        if (nota && !(cat && CATS[tipo].indexOf(cat) >= 0)) {
+          var prev = state.items.filter(function (it) { return it.tipo === tipo && it.nota && it.nota.toLowerCase() === nota.toLowerCase(); }).sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; })[0];
+          if (prev && CATS[tipo].indexOf(prev.cat) >= 0) { $("cat").value = prev.cat; $("cat").dispatchEvent(new Event("change", { bubbles: true })); renderCatChips(); }
+          if (prev && !cu && accById(prev.cuenta)) { $("cuenta").value = String(prev.cuenta); $("cuenta").dispatchEvent(new Event("change", { bubbles: true })); renderAccPick(); }
+        }
+        // guardar=1 (atajo de Apple Pay): se agrega sin tocar nada; queda «Deshacer» por si acaso
+        if (auto && amt > 0) setTimeout(function () {
+          var n0 = state.items.length; $("add").click();
+          var it = state.items.length > n0 ? state.items[state.items.length - 1] : null;
+          if (it && window.__toast2) window.__toast2((tipo === "gasto" ? "Gasto" : "Ingreso") + " agregado: " + money(it.monto, it.moneda) + (it.nota ? " · " + it.nota : "") + ".", "Deshacer", function () { delMovUndo(it.id); });
+        }, 450);
       })();
     };
     (function () {
