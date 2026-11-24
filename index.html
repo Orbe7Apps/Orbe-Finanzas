@@ -3124,6 +3124,35 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 .cal-nav#hist-next::after, .cal-nav#cal-next::after, .cal-nav#ai-next::after, .cal-nav#ad-mnext::after, .cal-nav#pay-next::after { transform: scaleX(-1); }
 .pay-cal .cal-nav::after { width: 15px; height: 15px; }
 
+/* Nuevo movimiento: número más grande que salta al escribir, y fichas de cuenta, fecha y nota */
+.sheet .amt-card #monto, .amt-card #monto { font-size: var(--mfs, 3.7rem) !important; transition: font-size .25s ease, color .3s ease; }
+#sheet .amt-card { padding-bottom: 4px; }
+#monto.amt-pop { animation: amtPop .32s cubic-bezier(.34,1.56,.64,1); }
+#monto.amt-drop { animation: amtDrop .26s ease; }
+@keyframes amtPop { 0% { transform: translateY(5px) scale(.94); opacity: .55; } 60% { transform: translateY(-2px) scale(1.04); opacity: 1; } 100% { transform: none; } }
+@keyframes amtDrop { 0% { transform: scale(1.03); } 50% { transform: scale(.97); opacity: .8; } 100% { transform: none; } }
+.sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; padding: 0; border: 0; }
+.mv-strip { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 2px 0 16px; }
+.mv-strip .ms { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; min-height: 40px; padding: 0 15px 0 11px; border: 0; border-radius: 999px; background: var(--fill); color: var(--ink); font: inherit; font-size: .88rem; font-weight: 650; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .25s ease, box-shadow .25s ease, transform .15s ease; animation: aiUp .4s cubic-bezier(.32,.72,0,1) backwards; }
+.mv-strip .ms:nth-child(2) { animation-delay: .04s; } .mv-strip .ms:nth-child(3) { animation-delay: .08s; }
+.mv-strip .ms:active { transform: scale(.96); }
+.mv-strip .ms > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.mv-strip .ms svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
+.mv-strip .ms .acc-av { width: 24px; height: 24px; font-size: .6rem; flex: none; }
+.mv-strip .ms.on { box-shadow: inset 0 0 0 2px var(--accent); }
+#ms-nota:not(.has) span { color: var(--muted); }
+html.mono .mv-strip .ms svg { color: var(--ink); }
+html.mono .mv-strip .ms.on { box-shadow: inset 0 0 0 2px var(--ink); }
+#sheet .fecha-w { display: none !important; }
+#sheet .sub-row, #sheet .sub-new { display: none !important; }
+#sheet .acc-w, #sheet .nota-w { display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: -14px; transition: grid-template-rows .4s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .4s cubic-bezier(.32,.72,0,1); }
+#sheet .acc-w > *, #sheet .nota-w > * { min-height: 0; overflow: hidden; }
+#sheet .acc-w.ms-in, #sheet .nota-w.ms-in { grid-template-rows: 1fr; opacity: 1; margin-top: 0; }
+#sheet .acc-w.ms-now, #sheet .nota-w.ms-now { transition: none; }
+#sheet .acc-w:not(.ms-in) *, #sheet .nota-w:not(.ms-in) * { visibility: hidden; }
+#sheet .acc-w > .mv-acc { overflow-x: auto; }
+@media (prefers-reduced-motion: reduce) { #monto.amt-pop, #monto.amt-drop, .mv-strip .ms { animation: none; } #sheet .acc-w, #sheet .nota-w { transition: none; } }
+
 /* Transferir: cuentas en fichas a todo el ancho, como en el resto de las hojas */
 .tr-pair { gap: 4px !important; }
 .tr-box { background: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -5289,11 +5318,20 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       <div class="amt-ops"><span class="amt-res" id="amt-res"></span></div>
     </div>
     <div class="amt-quick" id="amt-quick" role="group" aria-label="Montos rápidos" hidden></div>
+    <div class="mv-strip" id="mv-strip">
+      <button type="button" class="ms" id="ms-acc" aria-controls="acc-pick" aria-expanded="false"></button>
+      <button type="button" class="ms" id="ms-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg><span id="ms-date-t"></span></button>
+      <button type="button" class="ms" id="ms-nota" aria-controls="nota-w" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg><span id="ms-nota-t">Nota</span></button>
+    </div>
     <div class="grid">
-      <div>
-        <label id="cuenta-l">Cuenta</label>
+      <div class="acc-w" id="acc-w">
+        <label id="cuenta-l" class="sr-only">Cuenta</label>
         <select id="cuenta" hidden aria-hidden="true" tabindex="-1"></select>
         <div class="mv-acc" id="acc-pick" role="radiogroup" aria-labelledby="cuenta-l"></div>
+      </div>
+      <div class="wide nota-w" id="nota-w">
+        <label for="nota" class="sr-only">Nota</label>
+        <input type="text" id="nota" maxlength="80" placeholder="Ej: almuerzo con Ana #trabajo">
       </div>
       <select id="moneda" hidden aria-hidden="true" tabindex="-1"><option value="USD">Dólares ($)</option><option value="VES">Bolívares (Bs)</option><option value="USDT">USDT</option><option value="EUR">Euros (€)</option></select>
       <div class="wide">
@@ -5311,14 +5349,10 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           <p class="hint" id="split-rest"></p>
         </div>
       </div>
-      <div>
+      <div class="fecha-w">
         <label for="fecha-btn">Fecha</label>
         <input type="hidden" id="fecha">
         <button type="button" class="pick" id="fecha-btn" aria-haspopup="dialog"><span id="fecha-label"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg></button>
-      </div>
-      <div class="wide">
-        <label for="nota">Nota (opcional)</label>
-        <input type="text" id="nota" maxlength="80" placeholder="Ej: almuerzo con Ana #trabajo">
       </div>
     </div>
     <div class="sav-row" id="f-sav">
@@ -8490,7 +8524,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     });
     function renderAmtRes() {
       var v = $("monto").value, r = amtVal(v), has = /[+\-−×xX*/]/.test(v.slice(1));
-      $("monto").style.fontSize = v.length > 16 ? "1.35rem" : v.length > 12 ? "1.8rem" : v.length > 9 ? "2.3rem" : "";
+      $("monto").style.setProperty("--mfs", v.length > 16 ? "1.6rem" : v.length > 12 ? "2.2rem" : v.length > 9 ? "2.8rem" : "");
       var ok = has && r > 0;
       if (ok) $("amt-res").textContent = "= " + num(r);
       document.querySelector(".amt-ops").classList.toggle("has", ok);
@@ -8689,10 +8723,43 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       splitParts = []; $("split-rows").innerHTML = ""; $("sub-new").hidden = true;
       syncCuenta(); renderSub(); renderSplit();
       mqVals = null; renderMq();
+      msOpen("acc", false, true); msOpen("nota", false, true);
       $("sheet").hidden = false;
+      msUpd(); setTimeout(msUpd, 300); setTimeout(msUpd, 900);   // atajos y plantillas llenan campos justo después de abrir
 
     }
     function closeSheet() { state.editId = null; $("sheet").hidden = true; $("fab").focus(); }
+    /* Fichas bajo el monto: cuenta, fecha y nota. La cuenta y la nota se despliegan al tocarlas; la fecha abre el calendario */
+    function msUpd() {
+      var a = accById($("cuenta").value);
+      $("ms-acc").innerHTML = (a ? accAvatarXs(a) : "") + "<span>" + esc(a ? a.nombre : "Cuenta") + "</span>";
+      $("ms-date-t").textContent = $("fecha").value === today() ? "Hoy" : ($("fecha-label").textContent || "Fecha");
+      var n = $("nota").value.trim();
+      $("ms-nota-t").textContent = n || "Nota"; $("ms-nota").classList.toggle("has", !!n);
+    }
+    function msOpen(k, open, instant) {
+      var w = $(k === "acc" ? "acc-w" : "nota-w"), b = $(k === "acc" ? "ms-acc" : "ms-nota");
+      w.classList.toggle("ms-in", open); w.classList.toggle("ms-now", !!instant);
+      b.setAttribute("aria-expanded", String(open)); b.classList.toggle("on", open);
+    }
+    $("ms-acc").addEventListener("click", function () { var o = this.getAttribute("aria-expanded") !== "true"; msOpen("acc", o); if (o) msOpen("nota", false); });
+    window.__msUpd = msUpd;
+    $("ms-date").addEventListener("click", function () { $("fecha-btn").click(); });
+    $("ms-nota").addEventListener("click", function () {
+      var o = this.getAttribute("aria-expanded") !== "true"; msOpen("nota", o); if (o) { msOpen("acc", false); $("nota").focus(); }
+    });
+    $("nota").addEventListener("input", msUpd);
+    $("nota").addEventListener("blur", function () { setTimeout(function () { if (!$("nota").value.trim() && document.activeElement !== $("ms-nota")) msOpen("nota", false); }, 150); });
+    $("cuenta").addEventListener("change", function () { msUpd(); setTimeout(function () { msOpen("acc", false); }, 220); });
+    /* El número del monto da un pequeño salto cada vez que cambia */
+    (function () {
+      var m = $("monto"), last = "";
+      m.addEventListener("input", function () {
+        var v = m.value, cls = v.length >= last.length ? "amt-pop" : "amt-drop"; last = v;
+        m.classList.remove("amt-pop", "amt-drop"); void m.offsetWidth; m.classList.add(cls);
+      });
+      m.addEventListener("animationend", function () { m.classList.remove("amt-pop", "amt-drop"); });
+    })();
     /* Montos rápidos: los de la plantilla, o los que más repites en esa categoría (últimos 4 meses) */
     function quickFmt(v, cur) { return money(v, cur, Math.abs(v - Math.round(v)) < 0.005 ? 0 : 2); }
     function quickFreq(tipo, cat, cur) {
@@ -9797,7 +9864,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     })();
     /* ---------- Calendario ---------- */
     var cal = { mode: "day", target: "fecha", y: 0, m: 0, sel: "", nav: false };
-    function setFecha(v) { $("fecha").value = v; $("fecha-label").textContent = dateLabel(v); }
+    function setFecha(v) { $("fecha").value = v; $("fecha-label").textContent = dateLabel(v); if (window.__msUpd) window.__msUpd(); }
     function slideIn(els, dir) {
       if (!dir || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
       els.forEach(function (el) { if (el && el.animate) el.animate([{ opacity: 0, transform: "translateX(" + (dir * 24) + "px)" }, { opacity: 1, transform: "none" }], { duration: 360, easing: "cubic-bezier(0.32, 0.72, 0, 1)" }); });
