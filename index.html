@@ -9258,9 +9258,12 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       if (window.ResizeObserver) new ResizeObserver(function () { kick(); }).observe(box);
       return { update: update, pick: pick, sel: function () { return sel; }, home: goHome, state: function () { return { R: R.slice(), homing: homing, is3d: is3d, tf: tf, raf: !!raf, seen: seen }; } };
     }
+    // Comportamiento común de los orbes (el de Inicio es la guía): centro en punto que late y crece al elegir,
+    // cada anillo con al menos un trazo visible, mismos gestos, giro 3D, inercia y pausa al desplazar
+    function orbCfg(c) { return Object.assign({ dot: true, frac: function (r) { return Math.max(0.045, r.p); } }, c); }
     // Cuentas (Inicio): un anillo por cuenta con saldo, de mayor a menor
     (function () {
-      var o = makeOrb({ box: $("acc-sum"), list: $("acc-list"), seed: 23, dot: true, frac: function (r) { return Math.max(0.045, r.p); },
+      var o = makeOrb(orbCfg({ box: $("acc-sum"), list: $("acc-list"), seed: 23,
         rings: function (d) { return d.filter(function (r) { return r.u > 0; }).sort(function (x, y) { return y.u - x.u; }).slice(0, 5); },
         id: function (r) { return r.a.id; }, color: function (r) { return accColor(r.a); },
         sig: function (r) { return r.a.id + ":" + r.p.toFixed(4) + ":" + accColor(r.a); },
@@ -9269,7 +9272,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
             v: r.a.moneda === "USDT" ? (r.bal < 0 ? "-" : "") + "USDT " + num(Math.abs(r.bal)) : money(r.bal, r.a.moneda) };
           return { k: "En tus cuentas", s: d.length + (d.length === 1 ? " cuenta" : " cuentas"), v: money(ex.total, ex.cur) + (ex.miss ? "*" : "") };
         },
-        open: function (id) { openAccd(id); } });
+        open: function (id) { openAccd(id); } }));
       if (!o) return;
       window.__accOrb = function (rows, tot, ms, D) { o.update(rows, { total: tot, miss: ms, cur: D }); };
       window.__orbA = o;
@@ -9284,7 +9287,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
       var info = [], sel = null;
       function short(v, c) { return money(v, c, Math.abs(v - Math.round(v)) < 0.005 ? 0 : 2); }
       function hid(t) { return state.hideSav ? "••••" : t; }
-      var orb = makeOrb({ box: $("go-sum"), view: "goals", seed: 7, zeroHide: true,
+      var orb = makeOrb(orbCfg({ box: $("go-sum"), view: "goals", seed: 7,
         rings: function (d) { return d.slice(0, 5); },
         id: function (x) { return x.g.id; }, color: function (x) { return x.color; },
         sig: function (x) { return x.g.id + ":" + x.p.toFixed(4) + ":" + x.color; },
@@ -9292,7 +9295,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
           if (x) return { k: x.g.nombre, kc: x.color, v: hid(money(x.bal, x.g.moneda)), s: x.done ? "Lograda ✓" : fmtPct(x.pct) + " de " + hid(short(x.g.meta, x.g.moneda)) };
           return { k: "Ahorrado", v: hid(money(ex.saved || 0, ex.cur)), s: "de " + hid(short(ex.target || 0, ex.cur)) };
         },
-        onSel: function (id) { sel = id; paint(); } });
+        onSel: function (id) { sel = id; paint(); } }));
       window.__orbG = orb;
       function etaLabel(pace) {
         if (pace.kind !== "eta") return "";
