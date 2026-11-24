@@ -3143,7 +3143,18 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 #ms-nota:not(.has) span { color: var(--muted); }
 html.mono .mv-strip .ms svg { color: var(--ink); }
 html.mono .mv-strip .ms.on { box-shadow: inset 0 0 0 2px var(--ink); }
-#sheet .fecha-w { display: none !important; }
+#sheet .fecha-w, .sheet .big-hide { display: none !important; }
+.sheet .big-amt { grid-column: 1 / -1; display: grid; justify-items: center; text-align: center; margin: 2px 0 0; }
+.sheet .big-amt > label { margin: 0 0 2px !important; font-size: .8rem; font-weight: 600; color: var(--muted); text-align: center; }
+.sheet .big-amt > input:not([type="checkbox"]):not([type="radio"]):not([readonly]), .sheet .big-amt > input:not([type="checkbox"]):not([type="radio"]):not([readonly]):focus { width: 100%; text-align: center; border: 0 !important; background: none !important; box-shadow: none !important; outline: 0; padding: 0 !important; min-height: 0 !important; height: auto !important; border-radius: 0 !important; font-family: var(--display); font-weight: 700; font-size: 3.2rem !important; line-height: 1.15; letter-spacing: -.045em; font-variant-numeric: tabular-nums; color: var(--ink); caret-color: var(--accent); transition: color .3s ease; }
+.sheet .big-amt > input::placeholder { color: color-mix(in srgb, var(--ink) 28%, transparent); }
+.sheet .big-amt > input.amt-pop { animation: amtPop .32s cubic-bezier(.34,1.56,.64,1); }
+.sheet .big-amt > input.amt-drop { animation: amtDrop .26s ease; }
+.sheet .big-cur { grid-column: 1 / -1; display: grid; justify-items: center; }
+.sheet .big-cur > label { display: none; }
+.sheet .big-cur select { width: auto; min-width: 160px; text-align: center; border-radius: 999px; }
+.sheet .big-strip { grid-column: 1 / -1; margin: 0 0 6px; }
+@media (prefers-reduced-motion: reduce) { .sheet .big-amt > input { animation: none !important; } }
 #sheet .sub-row, #sheet .sub-new { display: none !important; }
 #sheet .acc-w, #sheet .nota-w { display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: -14px; transition: grid-template-rows .4s cubic-bezier(.32,.72,0,1), opacity .3s ease, margin-top .4s cubic-bezier(.32,.72,0,1); }
 #sheet .acc-w > *, #sheet .nota-w > * { min-height: 0; overflow: hidden; }
@@ -8752,13 +8763,48 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     $("nota").addEventListener("blur", function () { setTimeout(function () { if (!$("nota").value.trim() && document.activeElement !== $("ms-nota")) msOpen("nota", false); }, 150); });
     $("cuenta").addEventListener("change", function () { msUpd(); setTimeout(function () { msOpen("acc", false); }, 220); });
     /* El número del monto da un pequeño salto cada vez que cambia */
-    (function () {
-      var m = $("monto"), last = "";
+    function amtPop(m) {
+      if (!m || m._pop) return; m._pop = 1; var last = m.value;
       m.addEventListener("input", function () {
         var v = m.value, cls = v.length >= last.length ? "amt-pop" : "amt-drop"; last = v;
         m.classList.remove("amt-pop", "amt-drop"); void m.offsetWidth; m.classList.add(cls);
       });
       m.addEventListener("animationend", function () { m.classList.remove("amt-pop", "amt-drop"); });
+    }
+    amtPop($("monto"));
+    /* El mismo estilo en las demás hojas con monto (pagos y cobros, ahorro, metas, transferir, aportes...):
+       el número arriba, grande y centrado; la divisa justo debajo; la fecha en una ficha que abre el calendario.
+       Solo se reordena y se viste: cada campo sigue siendo el mismo, con su lógica de siempre. */
+    (function () {
+      function big(id, curId) {
+        var inp = $(id); if (!inp) return null;
+        var w = inp.parentNode;
+        if (w.tagName === "SECTION") {   // monto suelto (plantilla): se envuelve con su etiqueta
+          var lb = w.querySelector('label[for="' + id + '"]'); w = document.createElement("div");
+          inp.parentNode.insertBefore(w, lb || inp); if (lb) w.appendChild(lb); w.appendChild(inp);
+        }
+        w.classList.add("big-amt"); amtPop(inp);
+        var g = w.parentNode; if (g.classList.contains("grid") && g.firstElementChild !== w) g.insertBefore(w, g.firstElementChild);
+        var after = w;
+        if (curId && $(curId)) { var cw = $(curId).closest(".grid > div") || $(curId).parentNode; cw.classList.add("big-cur"); after.after(cw); after = cw; }
+        return after;
+      }
+      function dateChip(after, btnId, labelId, hidId) {
+        var btn = $(btnId); if (!after || !btn) return;
+        var wrap = btn.parentNode, strip = document.createElement("div"), chip = document.createElement("button");
+        strip.className = "mv-strip big-strip"; chip.type = "button"; chip.className = "ms";
+        chip.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg><span></span>';
+        var t = chip.querySelector("span"), lab = (wrap.querySelector("label") || {}).textContent || "Fecha";
+        chip.setAttribute("aria-label", lab);
+        function upd() { var v = $(hidId).value; t.textContent = v && v === today() ? "Hoy" : ($(labelId).textContent || lab); }
+        new MutationObserver(upd).observe($(labelId), { childList: true, characterData: true, subtree: true });
+        chip.addEventListener("click", function () { btn.click(); });
+        strip.appendChild(chip); after.after(strip); wrap.classList.add("big-hide"); upd();
+      }
+      big("tu-monto"); big("sga-monto"); big("cq-monto"); big("sv-monto"); big("mv-monto"); big("gm-monto"); big("earn-monto");
+      big("ge-meta", "ge-moneda"); big("sgn-meta", "sgn-moneda");
+      dateChip(big("pg-monto", "pg-cur"), "pg-fecha-btn", "pg-fecha-label", "pg-fecha");
+      dateChip(big("tr-monto"), "tr-fecha-btn", "tr-fecha-label", "tr-fecha");
     })();
     /* Montos rápidos: los de la plantilla, o los que más repites en esa categoría (últimos 4 meses) */
     function quickFmt(v, cur) { return money(v, cur, Math.abs(v - Math.round(v)) < 0.005 ? 0 : 2); }
