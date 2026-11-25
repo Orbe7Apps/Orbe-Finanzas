@@ -23,7 +23,7 @@
   window.ORBE_OS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "ios" : /Android/i.test(ua) ? "android" : "other";
   document.documentElement.classList.add("os-" + window.ORBE_OS);
   try {
-    var d = JSON.parse(localStorage.getItem("gastos-v1") || "{}");
+    var d = JSON.parse(localStorage.getItem(/[?&]demo\b/.test(location.search) ? "gastos-demo" : "gastos-v1") || "{}");
     if (d.theme === "light" || d.theme === "dark") document.documentElement.setAttribute("data-theme", d.theme);
     if (d.mono) document.documentElement.classList.add("mono");
     if (/^(azul|verde|rosa|naranja)$/.test(d.accent || "")) document.documentElement.setAttribute("data-accent", d.accent);
@@ -5396,7 +5396,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
 
 <script>
 (function () {
-  var KEY = "gastos-v1";
+  // Demostración (botón «Abrir la demo» de la web de Orbe Apps): datos de ejemplo guardados aparte,
+  // sin nube ni cuenta. Nunca toca los datos reales de este navegador.
+  var DEMO = /[?&]demo\b/.test(location.search);
+  if (DEMO) window.__orbeDemo = true;
+  var KEY = DEMO ? "gastos-demo" : "gastos-v1";
   // Cuentas personales (Supabase). Vacío = la app funciona solo en este teléfono y la sección «Tu cuenta» no aparece.
   // url: «Project URL» y key: clave publicable o «anon», de Supabase → Project Settings → API.
   var CLOUD = { url: "https://homninhiimgcpkbqbycg.supabase.co", key: "sb_publishable_qLFeqK-7ILdCkepqr1v9Kg_mY6HBksV" };
@@ -5540,6 +5544,45 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
+  }
+  // Datos de ejemplo de la demostración: dos meses de una persona en Venezuela con 3 cuentas, una meta y pagos.
+  function demoSeed() {
+    var hoy = new Date(), n = 1000;
+    function dia(atras) { var d = new Date(hoy); d.setDate(d.getDate() - atras); return d.toISOString().slice(0, 10); }
+    var BV = 101, EF = 102, BI = 103, META = 201;
+    state.country = "VE"; state.onb = true; state.disp = "USD";
+    state.rate = 875.67; state.rateDate = dia(0);
+    state.accounts = [
+      { id: BV, nombre: "Banco de Venezuela", moneda: "VES", saldo: 210000, creado: dia(60), icon: "", color: "#5b4cff" },
+      { id: EF, nombre: "Efectivo", moneda: "USD", saldo: 120, creado: dia(60), icon: "", color: "#00a651" },
+      { id: BI, nombre: "Binance", moneda: "USDT", saldo: 300, creado: dia(60), icon: "", color: "#e08a00" }
+    ];
+    state.goals = [{ id: META, nombre: "Viaje a Mérida", meta: 400, moneda: "USD", color: "#8a3ffc" }];
+    var it = [];
+    function mov(tipo, atras, monto, cuenta, cat, nota) { var a = state.accounts.filter(function (x) { return x.id === cuenta; })[0]; it.push({ id: ++n, tipo: tipo, monto: monto, moneda: a.moneda, cuenta: cuenta, cat: cat, fecha: dia(atras), nota: nota }); }
+    [0, 30].forEach(function (m) {
+      mov("ingreso", m + 25, 480, BI, "Sueldo", "Pago quincena");
+      mov("ingreso", m + 10, 480, BI, "Sueldo", "Pago quincena");
+      mov("ingreso", m + 18, 85, EF, "Freelance", "Diseño de logo");
+      mov("gasto", m + 24, 38000, BV, "Alimentación", "Mercado del mes");
+      mov("gasto", m + 20, 9500, BV, "Servicios", "Internet y teléfono");
+      mov("gasto", m + 16, 25, EF, "Restaurantes", "Cena con amigos");
+      mov("gasto", m + 14, 12000, BV, "Transporte", "Gasolina");
+      mov("gasto", m + 12, 15, BI, "Suscripciones", "Streaming");
+      mov("gasto", m + 8, 40, EF, "Salud", "Farmacia");
+      mov("gasto", m + 6, 18000, BV, "Hogar", "Productos de limpieza");
+      mov("gasto", m + 3, 30, EF, "Ocio", "Cine");
+      mov("gasto", m + 1, 6500, BV, "Alimentación", "Panadería");
+    });
+    mov("gasto", 2, 60, BI, "Ropa", "Zapatos");
+    it.push({ id: ++n, tipo: "traspaso", fecha: dia(40), cat: "Ahorro", moneda: "USDT", monto: 100, nota: "Binance → Viaje a Mérida", desde: { k: "cuenta", id: BI, moneda: "USDT", monto: 100 }, hacia: { k: "meta", id: META, moneda: "USD", monto: 100 } });
+    it.push({ id: ++n, tipo: "traspaso", fecha: dia(9), cat: "Ahorro", moneda: "USDT", monto: 80, nota: "Binance → Viaje a Mérida", desde: { k: "cuenta", id: BI, moneda: "USDT", monto: 80 }, hacia: { k: "meta", id: META, moneda: "USD", monto: 80 } });
+    state.items = it;
+    state.payments = [
+      { id: "d1", titulo: "Alquiler", monto: 150, moneda: "USD", fecha: dia(-5), paid: false },
+      { id: "d2", titulo: "Seguro del carro", monto: 35, moneda: "USD", fecha: dia(-12), paid: false }
+    ];
+    save();
   }
   function today() {
     var d = new Date();
@@ -8161,6 +8204,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     if (!$("splash")) window.__splashDone = true;
     setTimeout(function () { window.__splashDone = true; window.__release(); }, 4000);
     load();
+    if (DEMO && !state.onb) demoSeed();
     applyLocale();
     state.rateManual = ""; state.rateEurManual = ""; state.rateUsdtManual = "";
     if (!state.rate) { state.rate = 875.67; state.rateDate = "2026-10-08"; save(); }
