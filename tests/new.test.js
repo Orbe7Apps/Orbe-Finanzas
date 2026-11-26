@@ -1,0 +1,73 @@
+const path = require('path'), fs = require('fs');
+const APP = 'file://' + path.resolve(__dirname, '../index.html');
+const OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recursive: true });
+const { chromium, devices } = require('playwright');
+(async () => { const b = await chromium.launch(); const errs = [];
+  const d0 = require('./datos.js')();
+  const ok = (n, c, x) => console.log((c ? '✓ ' : '✗ FALLA ') + n + (x ? ' — ' + x : ''));
+  const T0 = new Date(); const iso = (off) => { const x = new Date(T0.getFullYear(), T0.getMonth(), T0.getDate() + off); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+  const d = JSON.parse(JSON.stringify(d0)); const A = d.accounts[0].id;
+  [[3, 'Transporte', 'Taxi'], [3, 'Transporte', 'Taxi'], [3, 'Transporte', ''], [5, 'Transporte', ''], [5, 'Transporte', ''], [8, 'Transporte', ''], [8, 'Transporte', ''], [12.5, 'Salud', 'Farmatodo']].forEach((x, i) => d.items.push({ id: 7000 + i, tipo: 'gasto', monto: x[0], moneda: d.accounts[0].moneda, cat: x[1], fecha: iso(-i - 1), cuenta: A, nota: x[2] }));
+  d.templates = [{ id: 't1', nombre: 'Café', tipo: 'gasto', cuenta: A, cat: 'Restaurantes', nota: 'Café', color: '#e8436a' }];
+  async function open(url, dd, opt = {}) {
+    const ctx = await b.newContext({ ...devices['iPhone 15'], deviceScaleFactor: 2, colorScheme: opt.th || 'light' }); const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message));
+    await p.route(/dolarapi|pydolar|supabase|er-api|tasa.json|coingecko/, r => r.abort());
+    await p.addInitScript(x => { if (!sessionStorage.q) { sessionStorage.q = 1; localStorage.setItem('gastos-v1', JSON.stringify(x)); localStorage.setItem('orbe-act', String(Date.now())); } }, dd);
+    await p.goto(url); await p.waitForTimeout(4200); await p.addStyleTag({ content: '#inst{display:none!important}' }); return { p, ctx };
+  }
+  // 1) Montos rápidos en «Nuevo movimiento»
+  let { p, ctx } = await open(APP, d);
+  await p.evaluate(() => { document.getElementById('fab').click(); }); await p.waitForTimeout(400); await p.evaluate(() => document.querySelector('[data-dial="mov"]').click()); await p.waitForTimeout(800);
+  await p.evaluate(() => { const s = document.getElementById('cat'); s.value = 'Transporte'; s.dispatchEvent(new Event('change', { bubbles: true })); }); await p.waitForTimeout(300);
+  const q1 = await p.evaluate(() => [...document.querySelectorAll('#amt-quick button')].map(b => b.textContent));
+  ok('Nuevo movimiento: sin montos rápidos', q1.length === 0, JSON.stringify(q1));
+  await p.screenshot({ path: OUT + '/nw-1.png' });
+  await p.evaluate(() => { const s = document.getElementById('cat'); s.value = 'Hogar'; s.dispatchEvent(new Event('change', { bubbles: true })); }); await p.waitForTimeout(200);
+  await p.evaluate(() => document.getElementById('sheet-close').click()); await p.waitForTimeout(500);
+  // 2) Plantilla con tres montos rápidos
+  await p.evaluate(() => document.getElementById('fab').click()); await p.waitForTimeout(400); await p.evaluate(() => document.querySelector('[data-dial="plantilla"]').click()); await p.waitForTimeout(700);
+  await p.evaluate(() => document.querySelector('[data-tpl-edit="t1"]').click()); await p.waitForTimeout(700);
+  ok('el editor tiene los 3 campos de montos rápidos', await p.evaluate(() => ['te-r1', 'te-r2', 'te-r3'].every(id => document.getElementById(id).offsetParent)));
+  await p.fill('#te-r1', '1,5'); await p.fill('#te-r2', '3'); await p.fill('#te-r3', '2'); await p.screenshot({ path: OUT + '/nw-2.png' });
+  await p.evaluate(() => document.getElementById('te-save').click()); await p.waitForTimeout(500);
+  ok('se guardan ordenados', await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('gastos-v1')).templates[0].rap)) === '[1.5,2,3]');
+  await p.evaluate(() => document.querySelector('[data-use="t1"]').click()); await p.waitForTimeout(700);
+  const q2 = await p.evaluate(() => [...document.querySelectorAll('#tu-quick button')].map(b => b.textContent));
+  ok('al usar la plantilla aparecen debajo del monto', q2.length === 3, JSON.stringify(q2));
+  await p.click('#tu-quick button:nth-child(3)'); await p.waitForTimeout(200); await p.screenshot({ path: OUT + '/nw-3.png' });
+  const n0 = await p.evaluate(() => JSON.parse(localStorage.getItem('gastos-v1')).items.length);
+  await p.evaluate(() => document.getElementById('tu-go').click()); await p.waitForTimeout(600);
+  ok('un toque + Agregar anota el movimiento con ese monto', await p.evaluate(n0 => { const s = JSON.parse(localStorage.getItem('gastos-v1')); const it = s.items[s.items.length - 1]; return s.items.length === n0 + 1 && it.monto === 3 && it.cat === 'Restaurantes'; }, n0));
+  // 4) Registro: ojito quieto y teclas
+  await p.evaluate(() => { document.querySelectorAll('.sheet-backdrop').forEach(x => x.hidden = true); document.getElementById('cloud-sheet').hidden = false; document.querySelector('[data-clm="up"]').click(); }); await p.waitForTimeout(800);
+  const eye = () => p.evaluate(() => { const r = document.querySelector('#cloud-sheet .pw-eye').getBoundingClientRect(); return Math.round(r.top * 10) / 10; });
+  const e0 = await eye(); const eb = await p.evaluate(() => { const r = document.querySelector('#cloud-sheet .pw-eye').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+  await p.mouse.move(eb[0], eb[1]); await p.mouse.down(); await p.waitForTimeout(150); const e1 = await eye(); await p.mouse.up(); await p.waitForTimeout(300); const e2 = await eye();
+  ok('el ojito no se mueve al tocarlo', Math.abs(e0 - e1) < 1.5 && Math.abs(e0 - e2) < 0.5, e0 + ' → ' + e1 + ' → ' + e2);
+  ok('el ojito queda centrado en el campo', await p.evaluate(() => { const a = document.querySelector('#cloud-sheet .pw-eye').getBoundingClientRect(), b = document.getElementById('cl-pass').getBoundingClientRect(); return Math.abs((a.top + a.bottom) / 2 - (b.top + b.bottom) / 2) < 1.5; }));
+  ok('al tocarlo se ve la contraseña', await p.evaluate(() => document.getElementById('cl-pass').type === 'text'));
+  await p.focus('#cl-email'); await p.keyboard.type('Gabriel@Mail.com'); await p.keyboard.press('Enter'); await p.waitForTimeout(200);
+  ok('«siguiente» en el correo pasa a la contraseña', await p.evaluate(() => document.activeElement.id === 'cl-pass'));
+  await p.keyboard.type('Clave123'); await p.keyboard.press('Enter'); await p.waitForTimeout(200);
+  ok('en «Crear cuenta», la contraseña pasa a repetirla', await p.evaluate(() => document.activeElement.id === 'cl-passc'));
+  await p.screenshot({ path: OUT + '/nw-4.png' });
+  await ctx.close();
+  // 3) Apple Pay: enlace con guardar=1
+  ({ p, ctx } = await open(APP + '?guardar=1&gasto=USD%2012.50&comercio=Farmatodo', d));
+  await p.waitForTimeout(1500);
+  const last = await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('gastos-v1')); return s.items[s.items.length - 1]; });
+  ok('se anota solo, con el monto y el comercio', last.monto === 12.5 && last.nota === 'Farmatodo' && last.tipo === 'gasto', JSON.stringify(last));
+  ok('usa la categoría de la última vez en ese comercio', last.cat === 'Salud', last.cat);
+  ok('muestra el aviso con «Deshacer» y la hoja queda cerrada', await p.evaluate(() => /Gasto agregado/.test((document.querySelector('.toast') || {}).innerText || '') && document.getElementById('sheet').hidden), await p.evaluate(() => (document.querySelector('.toast') || {}).innerText));
+  await p.screenshot({ path: OUT + '/nw-5.png' });
+  await p.evaluate(() => document.querySelector('.toast .t-act').click()); await p.waitForTimeout(500);
+  ok('«Deshacer» lo quita', await p.evaluate(id => !JSON.parse(localStorage.getItem('gastos-v1')).items.some(x => x.id === id), last.id));
+  await ctx.close();
+  ({ p, ctx } = await open(APP + '?gasto=1.234,56&nota=Mercado', d)); await p.waitForTimeout(1500);
+  ok('sin guardar=1 solo abre la hoja lista (como antes)', await p.evaluate(() => !document.getElementById('sheet').hidden && document.getElementById('monto').value === '1.234,56'), await p.evaluate(() => document.getElementById('monto').value));
+  await ctx.close();
+  ({ p, ctx } = await open(APP, d)); await p.evaluate(() => document.getElementById('set-open').click()); await p.waitForTimeout(800);
+  await p.evaluate(() => document.getElementById('siri-open').click()); await p.waitForTimeout(800); await p.evaluate(() => { const x = document.querySelector('.siri-pay'); x.open = true; x.scrollIntoView({ block: 'start' }); }); await p.waitForTimeout(400);
+  ok('la guía de Apple Pay muestra su enlace', await p.evaluate(() => /guardar=1&gasto=CANTIDAD&comercio=COMERCIO/.test(document.getElementById('pay-url').textContent)));
+  await p.screenshot({ path: OUT + '/nw-6.png' }); await ctx.close();
+  console.log('errores', errs); await b.close(); })();
