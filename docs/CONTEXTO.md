@@ -80,6 +80,7 @@ Están en `tests/` y se corren en Chromium con Playwright. Ver [`tests/LEEME.md`
 - **Nuevo movimiento:** se eligió la opción C de la maqueta, con fichas de Cuenta, Fecha y Nota. Se quitaron las subcategorías y el campo grande de nota.
 - **Montos rápidos:** solo en plantillas, con el título «Montos rápidos (opcional)» y sin texto de explicación.
 - **Colores:** el arcoíris solo en el tema Orbe; en los otros colores, tonos del mismo color, y en blanco y negro, nada de color.
+- **Pantalla de carga:** se eligió la opción A de la maqueta, «Órbitas»: cada anillo gira a su ritmo (el del medio al revés) y el punto central late con un halo relleno. Sin barra de carga. En blanco y negro el anillo interior usa `--sp3`, que pasa a `--ink`.
 - **Flechas de cambio de mes:** dibujadas con máscara SVG, no con los caracteres ‹ ›, que en el iPhone quedaban descentrados.
 - **Inicio de sesión:** el correo se pasa a minúsculas y la contraseña no se escribe con mayúscula automática.
 
