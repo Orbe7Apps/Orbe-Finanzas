@@ -92,9 +92,9 @@ Están en `tests/` y se corren en Chromium con Playwright. Ver [`tests/LEEME.md`
 - **Hojas aún sin el estilo de monto grande:** el retiro de la Bóveda (`fzr-monto`), que se arma en el momento.
 - **Teclado del iPhone:** el arreglo de `#kb-fill` solo se probó simulando el teclado. Confirmar en el teléfono que ya no se ve el fondo detrás.
 - **Orbe de Metas en el iPhone:** el dueño dijo que no se movía igual que el de Inicio. Ya comparten configuración, pero en el simulador no se encontró la diferencia de movimiento; confirmar en el teléfono.
-- **Lista vieja de pendientes:** comisiones bancarias automáticas, correos propios con Resend (necesita dominio), legal y contacto, tableta y computadora, Asesor y regla «Sobrante del mes». Estaba en `PENDIENTES.md`; se copia abajo.
+- **Lista vieja de pendientes:** comisiones bancarias automáticas, correos propios con Resend (necesita dominio), legal y contacto, tableta y computadora, Asesor y regla «Sobrante del mes». Venía del antiguo `PENDIENTES.md` (ya borrado); se copia abajo.
 
-### Pendientes anteriores (de `PENDIENTES.md`)
+### Pendientes anteriores
 
 - **Atajo de Siri:** el iPhone abre el enlace en Safari, que guarda los datos aparte. Para que el gasto llegue a la app instalada, la persona debe iniciar sesión en los dos.
 - **Correos propios con Resend:** necesita dominio; ver `supabase/LEEME.md`.
