@@ -47,7 +47,7 @@ Léelo al empezar cualquier sesión nueva. Las reglas de diseño y de trabajo es
 - **Selector de categorías por grupos:** `catGroupsHtml()` con buscador. Lo usan Nuevo movimiento y el editor de plantillas.
 - **Montos rápidos:** solo al usar una plantilla (`rap` en la plantilla).
 - **Teclado:** `#kb-fill` pinta lo que queda detrás del teclado translúcido del iPhone.
-  - Con el teclado abierto, la hoja abierta sube encima de él (clase `kb-up` en `<html>`, variables `--kb` y `--kbt`) y el campo activo se desplaza para quedar a la vista sobre el botón de abajo, también al escribir. La hoja de IA y la de la nube tienen su propio arreglo.
+  - Con el teclado abierto, la hoja abierta sube entera encima de él, sin encogerse, para no perder su estilo (clase `kb-up` en `<html>`, variables `--kb` y `--kbt`); si es más alta que el espacio, lo de arriba queda fuera de la pantalla. El campo activo se desplaza para quedar a la vista sobre el botón de abajo, también al escribir. La hoja de IA y la de la nube tienen su propio arreglo.
 - **Apple Pay:** `?guardar=1&gasto=…&comercio=…` anota el gasto solo, con «Deshacer». La guía está en el atajo de Siri.
 
 ## Repositorio y ramas

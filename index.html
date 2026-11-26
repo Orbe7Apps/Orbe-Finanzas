@@ -3124,7 +3124,7 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 #kb-fill.on { display: block; }
 #kb-fill.bg { background: var(--bg); }
 /* Con el teclado abierto, las hojas suben por encima de él (las que no tienen su propio arreglo) */
-html.kb-up .sheet-backdrop:not([hidden]):not(#ai-sheet):not(#cloud-sheet) { top: var(--kbt, 0px); bottom: var(--kb, 0px); }
+html.kb-up .sheet-backdrop:not([hidden]):not(#ai-sheet):not(#cloud-sheet) { top: calc(var(--kbt, 0px) - var(--kb, 0px)); bottom: var(--kb, 0px); }
 
 /* Flechas de cambio de mes: dibujadas (no con el carácter ‹ ›, que en iPhone queda descentrado) */
 .cal-nav { position: relative; font-size: 0 !important; color: var(--ink); }
@@ -15368,7 +15368,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   document.addEventListener("focusin", function () { setTimeout(upd, 60); setTimeout(upd, 350); setTimeout(upd, 480); });
   document.addEventListener("focusout", function () { setTimeout(upd, 120); });
   // Al escribir, lo de arriba puede crecer (la ficha de la nota muestra el texto): se vuelve a acomodar
-  document.addEventListener("input", function (e) { if (root.classList.contains("kb-up") && e.target === document.activeElement) requestAnimationFrame(function () { show(e.target, true); }); });
+  document.addEventListener("input", function (e) { if (e.target !== document.activeElement) return; if (root.classList.contains("kb-up")) requestAnimationFrame(function () { show(e.target, true); }); else if (vv.height < innerHeight - 60) requestAnimationFrame(upd); });
 })();
 </script>
 </body>
