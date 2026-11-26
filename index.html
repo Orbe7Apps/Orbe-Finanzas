@@ -3123,6 +3123,8 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 #kb-fill { position: fixed; left: 0; right: 0; bottom: 0; height: 0; background: var(--surface); z-index: 2147483000; pointer-events: none; display: none; }
 #kb-fill.on { display: block; }
 #kb-fill.bg { background: var(--bg); }
+/* Con el teclado abierto, las hojas suben por encima de él (las que no tienen su propio arreglo) */
+html.kb-up .sheet-backdrop:not([hidden]):not(#ai-sheet):not(#cloud-sheet) { top: var(--kbt, 0px); bottom: var(--kb, 0px); }
 
 /* Flechas de cambio de mes: dibujadas (no con el carácter ‹ ›, que en iPhone queda descentrado) */
 .cal-nav { position: relative; font-size: 0 !important; color: var(--ink); }
@@ -15340,10 +15342,33 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var typing = a && a.matches && a.matches("input, textarea, [contenteditable]");
     if (k > 60 && typing) { f.style.height = (k + 2) + "px"; f.className = "on" + (a.closest(".sheet, .ai-panel, #cloud-sheet") ? "" : " bg"); }
     else f.className = "";
+    lift(k > 60 && typing ? k : 0, a);
+  }
+  // La hoja abierta sube encima del teclado, y el campo que se escribe queda a la vista (sobre el botón de abajo)
+  var root = document.documentElement;
+  function lift(k, a) {
+    var bd = k && a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)");
+    if (!bd) { lift.k = 0; lift.a = null; root.classList.remove("kb-up"); root.style.removeProperty("--kb"); root.style.removeProperty("--kbt"); return; }
+    root.style.setProperty("--kb", k + "px"); root.style.setProperty("--kbt", Math.max(0, Math.round(vv.offsetTop)) + "px");
+    root.classList.add("kb-up");
+    if (k !== lift.k || a !== lift.a || Date.now() - lift.t < 600) show(a);
+    if (k !== lift.k || a !== lift.a) lift.t = Date.now();
+    lift.k = k; lift.a = a;
+  }
+  lift.t = 0;
+  function show(a, now) {
+    var sh = a && a.closest(".sheet"); if (!sh) return;
+    var r = a.getBoundingClientRect(), s = sh.getBoundingClientRect(), ft = sh.querySelector(".sheet-foot");
+    var top = Math.max(s.top, vv.offsetTop) + 12, bot = Math.min(s.bottom, vv.offsetTop + vv.height) - (ft ? ft.offsetHeight : 0) - 12;
+    var bh = now ? "auto" : "smooth";
+    if (r.bottom > bot) sh.scrollBy({ top: Math.min(r.bottom - bot, r.top - top), behavior: bh });
+    else if (r.top < top) sh.scrollBy({ top: r.top - top, behavior: bh });
   }
   vv.addEventListener("resize", upd); vv.addEventListener("scroll", upd);
-  document.addEventListener("focusin", function () { setTimeout(upd, 60); setTimeout(upd, 350); });
+  document.addEventListener("focusin", function () { setTimeout(upd, 60); setTimeout(upd, 350); setTimeout(upd, 480); });
   document.addEventListener("focusout", function () { setTimeout(upd, 120); });
+  // Al escribir, lo de arriba puede crecer (la ficha de la nota muestra el texto): se vuelve a acomodar
+  document.addEventListener("input", function (e) { if (root.classList.contains("kb-up") && e.target === document.activeElement) requestAnimationFrame(function () { show(e.target, true); }); });
 })();
 </script>
 </body>
