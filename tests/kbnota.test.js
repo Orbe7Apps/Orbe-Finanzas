@@ -1,4 +1,4 @@
-// Nuevo movimiento con el teclado abierto: la hoja sube entera, sin encogerse, y la nota queda a la vista
+// Nuevo movimiento con el teclado abierto: la hoja sube entera, sin encogerse, junto con el teclado, y la nota queda a la vista
 const path = require('path'), fs = require('fs');
 const APP = 'file://' + path.resolve(__dirname, '../index.html');
 const OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recursive: true });
@@ -30,7 +30,10 @@ const KB = 336;
     await p.evaluate(() => { document.activeElement.blur(); __vv.height = innerHeight; __vv.dispatchEvent(new Event('resize')); }); await p.waitForTimeout(400);
     ok(await p.evaluate(() => !document.documentElement.classList.contains('kb-up')), th + ' al cerrar el teclado la hoja vuelve abajo');
     // Nota: se toca la ficha, se enfoca el campo y luego aparece el teclado (como en el iPhone)
-    await p.evaluate(() => document.getElementById('ms-nota').click()); await p.waitForTimeout(50); await kbOn(KB); await p.waitForTimeout(900);
+    await p.evaluate(() => document.getElementById('ms-nota').click()); await p.waitForTimeout(50);
+    ok(await p.evaluate(() => document.documentElement.classList.contains('kb-up')), th + ' la hoja empieza a subir al tocar, junto con el teclado (altura recordada)');
+    await kbOn(KB); await p.waitForTimeout(900);
+    ok(await p.evaluate(() => document.querySelector('#sheet .sheet').style.transform === ''), th + ' al terminar la subida no queda desplazamiento');
     await p.keyboard.type('almuerzo con Ana'); await p.waitForTimeout(600);
     c = await check(); ok(c.id === 'nota' && c.top >= 0 && c.bottom <= c.footTop && c.bottom <= c.vis, th + ' nota a la vista ' + JSON.stringify(c));
     await p.screenshot({ path: path.join(OUT, 'kbnota-nota-' + th + '.png') });
