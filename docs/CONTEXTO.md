@@ -47,7 +47,7 @@ Léelo al empezar cualquier sesión nueva. Las reglas de diseño y de trabajo es
 - **Selector de categorías por grupos:** `catGroupsHtml()` con buscador. Lo usan Nuevo movimiento y el editor de plantillas.
 - **Montos rápidos:** solo al usar una plantilla (`rap` en la plantilla).
 - **Teclado:** `#kb-fill` pinta lo que queda detrás del teclado translúcido del iPhone.
-  - Con el teclado abierto, la hoja abierta sube entera encima de él, sin encogerse, para no perder su estilo (clase `kb-up` en `<html>`, variables `--kb` y `--kbt`); si es más alta que el espacio, lo de arriba queda fuera de la pantalla. El campo activo se desplaza para quedar a la vista sobre el botón de abajo, también al escribir. La hoja de IA y la de la nube tienen su propio arreglo.
+  - Con el teclado abierto, la hoja abierta sube entera encima de él, sin encogerse, para no perder su estilo (clase `kb-up` en `<html>`, variables `--kb` y `--kbt`); si es más alta que el espacio, lo de arriba queda fuera de la pantalla. Sube junto con el teclado: empieza al tocar el campo, con la altura que tuvo el teclado la vez anterior (`orbe-kbh` en `localStorage`), y hoja y contenido se mueven en un solo gesto (`glide()`, 0,42 s, curva de las hojas). Al cerrar el teclado baja igual. El campo activo se desplaza para quedar a la vista sobre el botón de abajo, también al escribir. La hoja de IA y la de la nube tienen su propio arreglo.
 - **Apple Pay:** `?guardar=1&gasto=…&comercio=…` anota el gasto solo, con «Deshacer». La guía está en el atajo de Siri.
 
 ## Repositorio y ramas
@@ -81,6 +81,7 @@ Están en `tests/` y se corren en Chromium con Playwright. Ver [`tests/LEEME.md`
 - **Nuevo movimiento:** se eligió la opción C de la maqueta, con fichas de Cuenta, Fecha y Nota. Se quitaron las subcategorías y el campo grande de nota.
 - **Montos rápidos:** solo en plantillas, con el título «Montos rápidos (opcional)» y sin texto de explicación.
 - **Colores:** el arcoíris solo en el tema Orbe; en los otros colores, tonos del mismo color, y en blanco y negro, nada de color.
+- **Subida de la hoja con el teclado:** se eligió la opción B de la maqueta, «Junto al teclado» (sin esperar al teclado ni saltar). La primera vez, sin altura recordada, sube cuando el teclado avisa.
 - **Pantalla de carga:** se eligió la opción A de la maqueta, «Órbitas»: cada anillo gira a su ritmo (el del medio al revés) y el punto central late con un halo relleno. Sin barra de carga. En blanco y negro el anillo interior usa `--sp3`, que pasa a `--ink`.
 - **Flechas de cambio de mes:** dibujadas con máscara SVG, no con los caracteres ‹ ›, que en el iPhone quedaban descentrados.
 - **Inicio de sesión:** el correo se pasa a minúsculas y la contraseña no se escribe con mayúscula automática.

@@ -15342,24 +15342,53 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var typing = a && a.matches && a.matches("input, textarea, [contenteditable]");
     if (k > 60 && typing) { f.style.height = (k + 2) + "px"; f.className = "on" + (a.closest(".sheet, .ai-panel, #cloud-sheet") ? "" : " bg"); }
     else f.className = "";
+    if (!(k > 60) && typing && lift.pre && Date.now() - lift.pre < 900 && a === lift.a) return;
     lift(k > 60 && typing ? k : 0, a);
   }
   // La hoja abierta sube encima del teclado, y el campo que se escribe queda a la vista (sobre el botón de abajo)
   var root = document.documentElement;
-  function lift(k, a) {
+  // Movimiento de subida y bajada: hoja y contenido se mueven juntos, en un solo gesto
+  var KBM = { d: 420, e: [0.32, 0.72, 0, 1] };
+  function bez(e) { var x1 = e[0], y1 = e[1], x2 = e[2], y2 = e[3];
+    function c(a, b, t) { return ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t; }
+    return function (x) { var lo = 0, hi = 1, t = x; for (var i = 0; i < 20; i++) { var v = c(x1, x2, t); if (Math.abs(v - x) < 1e-4) break; if (v < x) lo = t; else hi = t; t = (lo + hi) / 2; } return c(y1, y2, t); }; }
+  var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)");
+  function glide(sh, dy, s0, s1) {
+    if (glide.raf) cancelAnimationFrame(glide.raf);
+    if (glide.sh && glide.sh !== sh) { glide.sh.style.transform = ""; glide.sh.style.transition = ""; }
+    if ((still && still.matches) || (Math.abs(dy) < 2 && Math.abs(s1 - s0) < 2)) { sh.style.transform = ""; sh.style.transition = ""; sh.scrollTop = s1; glide.sh = null; return; }
+    var m = KBM, ez = bez(m.e), t0 = performance.now(); glide.sh = sh;
+    sh.style.transition = "none"; sh.style.transform = "translateY(" + dy + "px)"; sh.scrollTop = s0;
+    (function step(now) { var t = Math.min(1, (now - t0) / m.d), p = ez(t);
+      sh.style.transform = t < 1 ? "translateY(" + (dy * (1 - p)).toFixed(2) + "px)" : "";
+      sh.scrollTop = s0 + (s1 - s0) * Math.min(1, p);
+      if (t < 1) glide.raf = requestAnimationFrame(step); else { glide.raf = 0; glide.sh = null; sh.style.transition = ""; if (lift.a) show(lift.a, true); } })(t0);
+  }
+  function lift(k, a, pre) {
     var bd = k && a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)");
-    if (!bd) { lift.k = 0; lift.a = null; root.classList.remove("kb-up"); root.style.removeProperty("--kb"); root.style.removeProperty("--kbt"); return; }
+    var hb = bd || (lift.a && lift.a.closest(".sheet-backdrop")), sh = hb && !hb.hidden ? hb.querySelector(".sheet") : null;
+    var y0 = sh ? sh.getBoundingClientRect().top : 0, s0 = sh ? sh.scrollTop : 0, moved = (k || 0) !== (lift.k || 0) || a !== lift.a;
+    if (!bd) { lift.k = 0; lift.a = null; root.classList.remove("kb-up"); root.style.removeProperty("--kb"); root.style.removeProperty("--kbt");
+      if (sh && moved) glide(sh, y0 - sh.getBoundingClientRect().top, s0, sh.scrollTop); return; }
+    if (!pre) try { localStorage.setItem("orbe-kbh", String(k)); } catch (e) {}
     root.style.setProperty("--kb", k + "px"); root.style.setProperty("--kbt", Math.max(0, Math.round(vv.offsetTop)) + "px");
     root.classList.add("kb-up");
-    if (k !== lift.k || a !== lift.a || Date.now() - lift.t < 600) show(a);
-    if (k !== lift.k || a !== lift.a) lift.t = Date.now();
-    lift.k = k; lift.a = a;
+    if (moved) { lift.t = Date.now(); lift.k = k; lift.a = a;
+      if (glide.raf) { cancelAnimationFrame(glide.raf); glide.raf = 0; } sh.style.transform = ""; show(a, true);
+      glide(sh, y0 - sh.getBoundingClientRect().top, s0, sh.scrollTop); return; }
+    if (Date.now() - lift.t < 600) show(a);
   }
   lift.t = 0;
+  // La hoja empieza a subir al tocar el campo, junto con el teclado (con la altura que tuvo la última vez)
+  document.addEventListener("focusin", function (e) { var a = e.target; if (!a.matches || !a.matches("input, textarea, [contenteditable]")) return;
+    var h = 0; try { h = +localStorage.getItem("orbe-kbh") || 0; } catch (er) {}
+    if (h > 60 && !lift.k && a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)")) { lift.pre = Date.now(); lift(h, a, true); } });
   function show(a, now) {
+    if (glide.raf && !now) return;
     var sh = a && a.closest(".sheet"); if (!sh) return;
     var r = a.getBoundingClientRect(), s = sh.getBoundingClientRect(), ft = sh.querySelector(".sheet-foot");
-    var top = Math.max(s.top, vv.offsetTop) + 12, bot = Math.min(s.bottom, vv.offsetTop + vv.height) - (ft ? ft.offsetHeight : 0) - 12;
+    var vb = lift.k ? innerHeight - lift.k : vv.offsetTop + vv.height;
+    var top = Math.max(s.top, vv.offsetTop) + 12, bot = Math.min(s.bottom, vb) - (ft ? ft.offsetHeight : 0) - 12;
     var bh = now ? "auto" : "smooth";
     if (r.bottom > bot) sh.scrollBy({ top: Math.min(r.bottom - bot, r.top - top), behavior: bh });
     else if (r.top < top) sh.scrollBy({ top: r.top - top, behavior: bh });
