@@ -93,7 +93,7 @@ Están en `tests/` y se corren en Chromium con Playwright. Ver [`tests/LEEME.md`
   - Falta que el dueño decida si las dos pueden anotar o solo una.
   - Necesita backend en Supabase. No hay nada hecho.
 - **Hojas aún sin el estilo de monto grande:** el retiro de la Bóveda (`fzr-monto`), que se arma en el momento.
-- **Teclado del iPhone:** el arreglo de `#kb-fill` y el de la hoja que sube con el teclado (la nota de un movimiento quedaba tapada) solo se probaron simulando el teclado. Confirmar en el teléfono que ya no se ve el fondo detrás.
+- **Teclado del iPhone:** el dueño confirmó en el teléfono (27-11-2026) que la hoja sube bien junto con el teclado al escribir la nota. Falta confirmar en las demás hojas que no se ve el fondo detrás (`#kb-fill`).
 - **Orbe de Metas en el iPhone:** el dueño dijo que no se movía igual que el de Inicio. Ya comparten configuración, pero en el simulador no se encontró la diferencia de movimiento; confirmar en el teléfono.
 - **Lista vieja de pendientes:** comisiones bancarias automáticas, correos propios con Resend (necesita dominio), legal y contacto, tableta y computadora, Asesor y regla «Sobrante del mes». Venía del antiguo `PENDIENTES.md` (ya borrado); se copia abajo.
 
