@@ -15342,9 +15342,21 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     var typing = a && a.matches && a.matches("input, textarea, [contenteditable]");
     if (k > 60 && typing) { f.style.height = (k + 2) + "px"; f.className = "on" + (a.closest(".sheet, .ai-panel, #cloud-sheet") ? "" : " bg"); }
     else f.className = "";
+    // Si el navegador achica la pantalla él mismo al abrir el teclado, no hay que subir nada ni recordar altura
+    if (!(k > 60) && typing && lift.ih && innerHeight < lift.ih - 60) try { localStorage.removeItem("orbe-kbh"); lift.pre = 0; } catch (e) {}
     if (!(k > 60) && typing && lift.pre && Date.now() - lift.pre < 900 && a === lift.a) return;
     lift(k > 60 && typing ? k : 0, a);
+    hold();
   }
+  // El iPhone, además, desplaza toda la pantalla para mostrar el campo; como la hoja ya sube sola, ese
+  // desplazamiento se suma al nuestro y el campo se iba arriba. Mientras se escribe en una hoja, la página queda quieta.
+  function hold() {
+    if (lift.fy == null) return;
+    var a = document.activeElement, on = a && a.matches && a.matches("input, textarea, [contenteditable]") && a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)");
+    if (!on && !root.classList.contains("kb-up")) return;
+    if (Math.abs(window.scrollY - lift.fy) > 1 || vv.offsetTop > 1) window.scrollTo(window.scrollX, lift.fy);
+  }
+  window.addEventListener("scroll", hold, { passive: true });
   // La hoja abierta sube encima del teclado, y el campo que se escribe queda a la vista (sobre el botón de abajo)
   var root = document.documentElement;
   // Movimiento de subida y bajada: hoja y contenido se mueven juntos, en un solo gesto
@@ -15381,6 +15393,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
   lift.t = 0;
   // La hoja empieza a subir al tocar el campo, junto con el teclado (con la altura que tuvo la última vez)
   document.addEventListener("focusin", function (e) { var a = e.target; if (!a.matches || !a.matches("input, textarea, [contenteditable]")) return;
+    if (a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)")) { if (lift.fy == null) lift.fy = window.scrollY; if (!lift.k) lift.ih = innerHeight; }
     var h = 0; try { h = +localStorage.getItem("orbe-kbh") || 0; } catch (er) {}
     if (h > 60 && !lift.k && a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)")) { lift.pre = Date.now(); lift(h, a, true); } });
   function show(a, now) {
@@ -15394,8 +15407,11 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     else if (r.top < top) sh.scrollBy({ top: r.top - top, behavior: bh });
   }
   vv.addEventListener("resize", upd); vv.addEventListener("scroll", upd);
-  document.addEventListener("focusin", function () { setTimeout(upd, 60); setTimeout(upd, 350); setTimeout(upd, 480); });
-  document.addEventListener("focusout", function () { setTimeout(upd, 120); });
+  // Al final se revisa una vez más: si el teclado no llegó a avisar, la hoja no se queda subida de más
+  document.addEventListener("focusin", function () { setTimeout(upd, 60); setTimeout(upd, 350); setTimeout(upd, 480); setTimeout(upd, 950); });
+  document.addEventListener("focusout", function () { setTimeout(function () { upd();
+    var a = document.activeElement; if (a && a.matches && a.matches("input, textarea, [contenteditable]")) return;
+    if (lift.fy != null) { var y = lift.fy; lift.fy = null; lift.ih = 0; if (Math.abs(window.scrollY - y) > 1) window.scrollTo(window.scrollX, y); } }, 120); });
   // Al escribir, lo de arriba puede crecer (la ficha de la nota muestra el texto): se vuelve a acomodar
   document.addEventListener("input", function (e) { if (e.target !== document.activeElement) return; if (root.classList.contains("kb-up")) requestAnimationFrame(function () { show(e.target, true); }); else if (vv.height < innerHeight - 60) requestAnimationFrame(upd); });
 })();

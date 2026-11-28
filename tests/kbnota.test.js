@@ -39,6 +39,17 @@ const KB = 336;
     await p.screenshot({ path: path.join(OUT, 'kbnota-nota-' + th + '.png') });
     ok(await p.evaluate(() => document.getElementById('ms-nota-t').textContent) === 'almuerzo con Ana', th + ' la ficha muestra la nota');
     await p.evaluate(() => { document.activeElement.blur(); __vv.height = innerHeight; __vv.dispatchEvent(new Event('resize')); }); await p.waitForTimeout(400);
+    // El iPhone desplaza la pantalla por su cuenta para mostrar el campo: ese desplazamiento se deshace
+    const y0 = await p.evaluate(() => window.scrollY);
+    await p.focus('#monto'); await kbOn(KB); await p.waitForTimeout(700);
+    await p.evaluate(() => { window.scrollTo(0, 300); __vv.offsetTop = 0; __vv.dispatchEvent(new Event('scroll')); }); await p.waitForTimeout(150);
+    ok(await p.evaluate(() => window.scrollY) === y0, th + ' la página no se desplaza junto con la hoja (' + y0 + ')');
+    c = await check(); ok(c.id === 'monto' && c.top >= 0 && c.bottom <= c.vis, th + ' monto sigue a la vista ' + JSON.stringify(c));
+    await p.evaluate(() => { document.activeElement.blur(); __vv.height = innerHeight; __vv.dispatchEvent(new Event('resize')); }); await p.waitForTimeout(400);
+    // Si el teclado no llega a avisar, la hoja no se queda subida
+    await p.evaluate(() => document.getElementById('ms-nota').click()); await p.waitForTimeout(1300);
+    ok(await p.evaluate(() => !document.documentElement.classList.contains('kb-up')), th + ' sin aviso del teclado la hoja vuelve a su lugar');
+    await p.evaluate(() => document.activeElement.blur()); await p.waitForTimeout(300);
     await ctx.close();
   }
   console.log(fail ? fail + ' FALLA' : 'todo bien', 'errores', errs); await b.close(); })();
