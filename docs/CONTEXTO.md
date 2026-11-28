@@ -41,6 +41,7 @@ Léelo al empezar cualquier sesión nueva. Las reglas de diseño y de trabajo es
   - El monto es grande y da un salto al escribir (`amtPop`).
   - Debajo hay tres fichas: Cuenta, Fecha y Nota (`msUpd`, `msOpen`). Cuenta y Nota se despliegan; Fecha abre el calendario.
   - Las subcategorías están ocultas, pero se conservan al editar un movimiento.
+  - Entre la categoría y el botón quedan 32 px (opción B, 28-11-2026); la línea de avisos (`#err`, `#ok`) solo ocupa lugar si hay un aviso.
 - **Demás hojas con monto** (pago y cobro, ahorro, metas, transferir, aportes, cuadrar, plantilla, Binance Earn):
   - Mismo estilo: monto grande arriba, divisa debajo y fecha en una ficha.
   - Lo hacen las funciones `big()` y `dateChip()`, que solo reordenan y visten los campos; la lógica de cada hoja es la misma.
