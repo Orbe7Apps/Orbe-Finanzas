@@ -47,7 +47,7 @@ Léelo al empezar cualquier sesión nueva. Las reglas de diseño y de trabajo es
 - **Selector de categorías por grupos:** `catGroupsHtml()` con buscador. Lo usan Nuevo movimiento y el editor de plantillas.
 - **Montos rápidos:** solo al usar una plantilla (`rap` en la plantilla).
 - **Teclado:** `#kb-fill` pinta lo que queda detrás del teclado translúcido del iPhone.
-  - Con el teclado abierto, la hoja abierta sube entera encima de él, sin encogerse, para no perder su estilo (clase `kb-up` en `<html>`, variables `--kb` y `--kbt`); si es más alta que el espacio, lo de arriba queda fuera de la pantalla. Sube junto con el teclado: empieza al tocar el campo, con la altura que tuvo el teclado la vez anterior (`orbe-kbh` en `localStorage`), y hoja y contenido se mueven en un solo gesto (`glide()`, 0,42 s, curva de las hojas). Al cerrar el teclado baja igual. El campo activo se desplaza para quedar a la vista sobre el botón de abajo, también al escribir. Mientras se escribe en una hoja, la página queda quieta (`hold()`): si el iPhone la desplaza por su cuenta para mostrar el campo, se deshace, porque ese desplazamiento se sumaba al de la hoja y el campo se perdía arriba. Si el teclado no avisa en un segundo, la hoja vuelve a su lugar. La hoja de IA y la de la nube tienen su propio arreglo.
+  - Con el teclado abierto, la hoja abierta sube entera encima de él, sin encogerse, para no perder su estilo (clase `kb-up` en `<html>`, variables `--kb` y `--kbt`); si es más alta que el espacio, lo de arriba queda fuera de la pantalla. Sube junto con el teclado: empieza al tocar el campo, con la altura que tuvo el teclado la vez anterior (`orbe-kbh` en `localStorage`), y hoja y contenido se mueven en un solo gesto (`glide()`, 0,42 s, curva de las hojas). Al cerrar el teclado baja igual. El campo activo se desplaza para quedar a la vista sobre el botón de abajo, también al escribir. Mientras se escribe en una hoja, la página queda quieta (`hold()`): si el iPhone la desplaza por su cuenta para mostrar el campo, se deshace, porque ese desplazamiento se sumaba al de la hoja y el campo se perdía arriba. Si el teclado no avisa en un segundo, la hoja vuelve a su lugar. Si la hoja se cierra con el teclado abierto (al guardar o deslizarla), baja desde donde está (`drop()`), sin saltar la altura del teclado. La hoja de IA y la de la nube tienen su propio arreglo.
 - **Apple Pay:** `?guardar=1&gasto=…&comercio=…` anota el gasto solo, con «Deshacer». La guía está en el atajo de Siri.
 
 ## Repositorio y ramas
@@ -87,6 +87,8 @@ Están en `tests/` y se corren en Chromium con Playwright. Ver [`tests/LEEME.md`
 - **Inicio de sesión:** el correo se pasa a minúsculas y la contraseña no se escribe con mayúscula automática.
 
 ## Pendiente
+
+- **Revisión de animaciones (28-11-2026):** se midieron cuadro a cuadro en el simulador (`tests/anim.test.js`) la carga, las hojas, el teclado, la fila nueva del Historial y las pestañas, en claro, oscuro y blanco y negro. Se arreglaron dos fallos: la hoja daba un tirón hacia atrás al empezar a subir o bajar con el teclado, y al guardar con el teclado abierto saltaba de golpe hacia abajo. Falta confirmarlo en el iPhone.
 
 - **Cuentas compartidas con otra persona:**
   - Propuesta: invitar con un código; las dos personas ven el saldo y los movimientos, y cada movimiento muestra quién lo anotó.
