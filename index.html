@@ -3120,6 +3120,10 @@ html.mono .sheet-backdrop > .sheet { box-shadow: 0 30vh 0 0 var(--surface), 0 60
 .bal-hero:not(.sum-off) .flows > :nth-child(2) { animation-delay: .05s; } .bal-hero:not(.sum-off) .flows > :nth-child(3) { animation-delay: .1s; }
 @media (prefers-reduced-motion: reduce) { .bal-hero .flows, .bal-delta .bd-chev { transition: none; } .bal-hero .flows > * { animation: none !important; } }
 
+/* Nuevo movimiento: menos espacio entre la categoría y el botón (la línea de avisos solo ocupa lugar si hay un aviso) */
+#sheet #err:empty, #sheet #ok:empty { display: none; }
+#sheet .sheet-foot { margin-top: 20px; }
+
 #kb-fill { position: fixed; left: 0; right: 0; bottom: 0; height: 0; background: var(--surface); z-index: 2147483000; pointer-events: none; display: none; }
 #kb-fill.on { display: block; }
 #kb-fill.bg { background: var(--bg); }
