@@ -15371,7 +15371,7 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     if ((still && still.matches) || (Math.abs(dy) < 2 && Math.abs(s1 - s0) < 2)) { sh.style.transform = ""; sh.style.transition = ""; sh.scrollTop = s1; glide.sh = null; return; }
     var m = KBM, ez = bez(m.e), t0 = performance.now(); glide.sh = sh;
     sh.style.transition = "none"; sh.style.transform = "translateY(" + dy + "px)"; sh.scrollTop = s0;
-    (function step(now) { var t = Math.min(1, (now - t0) / m.d), p = ez(t);
+    (function step(now) { var t = Math.max(0, Math.min(1, (now - t0) / m.d)), p = ez(t);
       sh.style.transform = t < 1 ? "translateY(" + (dy * (1 - p)).toFixed(2) + "px)" : "";
       sh.scrollTop = s0 + (s1 - s0) * Math.min(1, p);
       if (t < 1) glide.raf = requestAnimationFrame(step); else { glide.raf = 0; glide.sh = null; sh.style.transition = ""; if (lift.a) show(lift.a, true); } })(t0);
@@ -15391,6 +15391,19 @@ html.mono .w-ring, html.mono .w-av, html.mono .w-av svg { color: var(--ink) !imp
     if (Date.now() - lift.t < 600) show(a);
   }
   lift.t = 0;
+  // Si la hoja se cierra con el teclado abierto (al guardar o al deslizarla), baja desde donde está, sin saltar:
+  // al ocultarse deja de estar subida sobre el teclado, así que se compensa esa altura y desde ahí baja
+  function drop(bd) {
+    if (!root.classList.contains("kb-up") || !lift.a || !bd.contains(lift.a)) return;
+    var sh = bd.querySelector(".sheet"), k = parseFloat(root.style.getPropertyValue("--kb")) || 0; if (!sh || !k) return;
+    if (glide.raf) { cancelAnimationFrame(glide.raf); glide.raf = 0; } glide.sh = null;
+    lift.k = 0; lift.a = null; root.classList.remove("kb-up"); root.style.removeProperty("--kb"); root.style.removeProperty("--kbt");
+    if (still && still.matches) { sh.style.transform = ""; sh.style.transition = ""; return; }
+    sh.style.transition = "none"; sh.style.transform = "translateY(" + (-k) + "px)"; void sh.offsetHeight;
+    sh.style.transition = ""; sh.style.transform = "";
+  }
+  var dropMo = new MutationObserver(function (ms) { ms.forEach(function (m) { if (m.target.hidden) drop(m.target); }); });
+  Array.prototype.forEach.call(document.querySelectorAll(".sheet-backdrop"), function (bd) { dropMo.observe(bd, { attributes: true, attributeFilter: ["hidden"] }); });
   // La hoja empieza a subir al tocar el campo, junto con el teclado (con la altura que tuvo la última vez)
   document.addEventListener("focusin", function (e) { var a = e.target; if (!a.matches || !a.matches("input, textarea, [contenteditable]")) return;
     if (a.closest(".sheet-backdrop:not(#ai-sheet):not(#cloud-sheet)")) { if (lift.fy == null) lift.fy = window.scrollY; if (!lift.k) lift.ih = innerHeight; }

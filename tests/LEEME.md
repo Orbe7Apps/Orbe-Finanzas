@@ -24,6 +24,7 @@ Cada prueba imprime ✓ o «✗ FALLA», y al final se ven los errores de la pá
 
 | Archivo | Qué revisa |
 |---|---|
+| `anim.test.js` | Animaciones medidas cuadro a cuadro: carga, abrir hoja, subir y bajar con el teclado, guardar con el teclado abierto, fila nueva, pestañas y «reducir movimiento» |
 | `kbnota.test.js` | Con el teclado abierto, la hoja de Nuevo movimiento sube y el monto y la nota quedan a la vista |
 | `c.test.js` | Nuevo movimiento: fichas de Cuenta, Fecha y Nota, número que salta y guardado |
 | `bigsave.test.js` | Pago, transferencia, ahorro y meta se guardan con el monto grande |
